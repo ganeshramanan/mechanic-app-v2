@@ -52,7 +52,7 @@ app.post("/service", async (req, res) => {
         service_date,
         next_service_date,
         phone_number || null,
-      ],
+      ]
     );
 
     res.json({
@@ -81,7 +81,7 @@ app.get("/vehicle/:number", async (req, res) => {
       WHERE UPPER(vehicle_number) = UPPER($1)
       ORDER BY service_date DESC
       `,
-      [number],
+      [number]
     );
 
     res.json(result.rows);
@@ -117,7 +117,7 @@ app.get("/due-services", async (req, res) => {
       FROM Service
       ORDER BY next_service_date ASC
       `,
-      [todayStr, next7Str],
+      [todayStr, next7Str]
     );
 
     res.json(result.rows);
@@ -192,3 +192,4 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
