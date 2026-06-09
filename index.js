@@ -8,7 +8,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-/* ---------------- HOME ---------------- */
+/* ---------------- HOME ----------------- */
 app.get("/", (req, res) => {
   res.send("Mechanic App V2 PostgreSQL Running 🚀");
 });
