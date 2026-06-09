@@ -4,33 +4,60 @@ const pool = require("./db");
 
 const app = express();
 
-/* ---------------- MIDDLEWARE ---------------- */
 app.use(cors());
 app.use(express.json());
 
-/* ---------------- HOME ----------------- */
+/* ---------------- HOME ---------------- */
+
 app.get("/", (req, res) => {
   res.send("Mechanic App V2 PostgreSQL Running 🚀");
 });
 
+/* ---------------- HEALTH ---------------- */
+
+app.get("/health", async (req, res) => {
+  try {
+    await pool.query("SELECT NOW()");
+
+    res.json({
+      status: "ok",
+      database: "postgresql",
+    });
+  } catch (err) {
+    res.status(500).json({
+      status: "error",
+      error: err.message,
+    });
+  }
+});
+
 /* ---------------- ADD SERVICE ---------------- */
+
 app.post("/service", async (req, res) => {
-  const { vehicle_number, description, cost, phone_number } = req.body;
+  const {
+    vehicle_number,
+    description,
+    cost,
+    phone_number,
+  } = req.body;
 
   if (!vehicle_number || !description || !cost) {
     return res.status(400).json({
-      error: "vehicle_number, description, cost are required",
+      error: "vehicle_number, description and cost are required",
     });
   }
 
   try {
     const today = new Date();
 
-    const service_date = today.toISOString().split("T")[0];
+    const service_date =
+      today.toISOString().split("T")[0];
 
     const next = new Date();
     next.setMonth(today.getMonth() + 3);
-    const next_service_date = next.toISOString().split("T")[0];
+
+    const next_service_date =
+      next.toISOString().split("T")[0];
 
     const result = await pool.query(
       `
@@ -62,14 +89,15 @@ app.post("/service", async (req, res) => {
     });
   } catch (err) {
     console.error(err);
+
     res.status(500).json({
-      error: "Insert failed",
-      details: err.message,
+      error: err.message,
     });
   }
 });
 
-/* ---------------- GET VEHICLE HISTORY ---------------- */
+/* ---------------- VEHICLE HISTORY ---------------- */
+
 app.get("/vehicle/:number", async (req, res) => {
   try {
     const number = req.params.number;
@@ -78,49 +106,80 @@ app.get("/vehicle/:number", async (req, res) => {
       `
       SELECT *
       FROM Service
-      WHERE UPPER(vehicle_number) = UPPER($1)
+      WHERE UPPER(vehicle_number)=UPPER($1)
       ORDER BY service_date DESC
       `,
       [number]
     );
 
-    res.json(result.rows);
+    const rows = result.rows.map((row) => ({
+      ...row,
+      service_date: row.service_date
+        ? row.service_date.toLocaleDateString("en-GB")
+        : null,
+      next_service_date: row.next_service_date
+        ? row.next_service_date.toLocaleDateString("en-GB")
+        : null,
+    }));
+
+    res.json(rows);
   } catch (err) {
     console.error(err);
 
     res.status(500).json({
-      error: "Query failed",
-      details: err.message,
+      error: err.message,
     });
   }
 });
 
 /* ---------------- DUE SERVICES ---------------- */
+
 app.get("/due-services", async (req, res) => {
   try {
     const today = new Date();
-    const todayStr = today.toISOString().split("T")[0];
 
-    const in7Days = new Date();
-    in7Days.setDate(today.getDate() + 7);
+    const todayStr =
+      today.toISOString().split("T")[0];
 
-    const next7Str = in7Days.toISOString().split("T")[0];
+    const next7Days = new Date();
+
+    next7Days.setDate(
+      today.getDate() + 7
+    );
+
+    const next7Str =
+      next7Days.toISOString().split("T")[0];
 
     const result = await pool.query(
       `
       SELECT *,
       CASE
-        WHEN next_service_date < $1::date THEN 'OVERDUE'
-        WHEN next_service_date <= $2::date THEN 'DUE_SOON'
+        WHEN next_service_date < $1::date
+          THEN 'OVERDUE'
+
+        WHEN next_service_date <= $2::date
+          THEN 'DUE_SOON'
+
         ELSE 'OK'
       END AS status
+
       FROM Service
       ORDER BY next_service_date ASC
       `,
       [todayStr, next7Str]
     );
 
-    res.json(result.rows);
+    const rows = result.rows.map((row) => ({
+      ...row,
+      service_date: row.service_date
+        ? row.service_date.toLocaleDateString("en-GB")
+        : null,
+      next_service_date: row.next_service_date
+        ? row.next_service_date.toLocaleDateString("en-GB")
+        : null,
+    }));
+
+    res.json(rows);
   } catch (err) {
     console.error(err);
 
@@ -131,18 +190,28 @@ app.get("/due-services", async (req, res) => {
 });
 
 /* ---------------- DEBUG DB ---------------- */
+
 app.get("/debug-db", async (req, res) => {
   try {
-    const result = await pool.query(`
-      SELECT
-        vehicle_number,
-        service_date,
-        next_service_date
+    const result = await pool.query(
+      `
+      SELECT *
       FROM Service
       ORDER BY id DESC
-    `);
+      `
+    );
 
-    res.json(result.rows);
+    const rows = result.rows.map((row) => ({
+      ...row,
+      service_date: row.service_date
+        ? row.service_date.toLocaleDateString("en-GB")
+        : null,
+      next_service_date: row.next_service_date
+        ? row.next_service_date.toLocaleDateString("en-GB")
+        : null,
+    }));
+
+    res.json(rows);
   } catch (err) {
     console.error(err);
 
@@ -153,9 +222,12 @@ app.get("/debug-db", async (req, res) => {
 });
 
 /* ---------------- RESET DB ---------------- */
+
 app.get("/reset-db", async (req, res) => {
   try {
-    await pool.query("TRUNCATE TABLE Service RESTART IDENTITY");
+    await pool.query(
+      "TRUNCATE TABLE Service RESTART IDENTITY"
+    );
 
     res.json({
       message: "Database reset successful ✔",
@@ -169,27 +241,15 @@ app.get("/reset-db", async (req, res) => {
   }
 });
 
-/* ---------------- HEALTH CHECK ---------------- */
-app.get("/health", async (req, res) => {
-  try {
-    await pool.query("SELECT NOW()");
-
-    res.json({
-      status: "ok",
-      database: "postgresql",
-    });
-  } catch (err) {
-    res.status(500).json({
-      status: "error",
-      error: err.message,
-    });
-  }
-});
-
 /* ---------------- START SERVER ---------------- */
-const PORT = process.env.PORT || 3000;
+
+const PORT =
+  process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(
+    `Server running on port ${PORT}`
+  );
 });
+
 
