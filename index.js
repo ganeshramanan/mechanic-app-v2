@@ -104,7 +104,14 @@ app.get("/vehicle/:number", async (req, res) => {
 
     const result = await pool.query(
       `
-      SELECT *
+      SELECT
+        id,
+        vehicle_number,
+        description,
+        cost,
+        phone_number,
+        TO_CHAR(service_date, 'DD/MM/YYYY') AS service_date,
+        TO_CHAR(next_service_date, 'DD/MM/YYYY') AS next_service_date
       FROM Service
       WHERE UPPER(vehicle_number)=UPPER($1)
       ORDER BY service_date DESC
@@ -112,17 +119,7 @@ app.get("/vehicle/:number", async (req, res) => {
       [number]
     );
 
-    const rows = result.rows.map((row) => ({
-      ...row,
-      service_date: row.service_date
-        ? row.service_date.toLocaleDateString("en-GB")
-        : null,
-      next_service_date: row.next_service_date
-        ? row.next_service_date.toLocaleDateString("en-GB")
-        : null,
-    }));
-
-    res.json(rows);
+    res.json(result.rows);
   } catch (err) {
     console.error(err);
 
@@ -137,31 +134,32 @@ app.get("/vehicle/:number", async (req, res) => {
 app.get("/due-services", async (req, res) => {
   try {
     const today = new Date();
-
-    const todayStr =
-      today.toISOString().split("T")[0];
+    const todayStr = today.toISOString().split("T")[0];
 
     const next7Days = new Date();
-
-    next7Days.setDate(
-      today.getDate() + 7
-    );
+    next7Days.setDate(today.getDate() + 7);
 
     const next7Str =
       next7Days.toISOString().split("T")[0];
 
     const result = await pool.query(
       `
-      SELECT *,
-      CASE
-        WHEN next_service_date < $1::date
-          THEN 'OVERDUE'
+      SELECT
+        id,
+        vehicle_number,
+        description,
+        cost,
+        phone_number,
+        TO_CHAR(service_date, 'DD/MM/YYYY') AS service_date,
+        TO_CHAR(next_service_date, 'DD/MM/YYYY') AS next_service_date,
 
-        WHEN next_service_date <= $2::date
-          THEN 'DUE_SOON'
-
-        ELSE 'OK'
-      END AS status
+        CASE
+          WHEN next_service_date < $1::date
+            THEN 'OVERDUE'
+          WHEN next_service_date <= $2::date
+            THEN 'DUE_SOON'
+          ELSE 'OK'
+        END AS status
 
       FROM Service
       ORDER BY next_service_date ASC
@@ -169,17 +167,7 @@ app.get("/due-services", async (req, res) => {
       [todayStr, next7Str]
     );
 
-    const rows = result.rows.map((row) => ({
-      ...row,
-      service_date: row.service_date
-        ? row.service_date.toLocaleDateString("en-GB")
-        : null,
-      next_service_date: row.next_service_date
-        ? row.next_service_date.toLocaleDateString("en-GB")
-        : null,
-    }));
-
-    res.json(rows);
+    res.json(result.rows);
   } catch (err) {
     console.error(err);
 
@@ -193,25 +181,20 @@ app.get("/due-services", async (req, res) => {
 
 app.get("/debug-db", async (req, res) => {
   try {
-    const result = await pool.query(
-      `
-      SELECT *
+    const result = await pool.query(`
+      SELECT
+        id,
+        vehicle_number,
+        description,
+        cost,
+        phone_number,
+        TO_CHAR(service_date, 'DD/MM/YYYY') AS service_date,
+        TO_CHAR(next_service_date, 'DD/MM/YYYY') AS next_service_date
       FROM Service
       ORDER BY id DESC
-      `
-    );
+    `);
 
-    const rows = result.rows.map((row) => ({
-      ...row,
-      service_date: row.service_date
-        ? row.service_date.toLocaleDateString("en-GB")
-        : null,
-      next_service_date: row.next_service_date
-        ? row.next_service_date.toLocaleDateString("en-GB")
-        : null,
-    }));
-
-    res.json(rows);
+    res.json(result.rows);
   } catch (err) {
     console.error(err);
 
@@ -243,13 +226,9 @@ app.get("/reset-db", async (req, res) => {
 
 /* ---------------- START SERVER ---------------- */
 
-const PORT =
-  process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-  console.log(
-    `Server running on port ${PORT}`
-  );
+  console.log(`Server running on port ${PORT}`);
 });
-
 
