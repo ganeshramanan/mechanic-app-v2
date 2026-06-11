@@ -37,65 +37,27 @@ app.post("/service", async (req, res) => {
 
   const {
     vehicle_number,
-    description,
-    cost,
     phone_number,
     items
   } = req.body;
 
-  if (!vehicle_number) {
+  if (!vehicle_number || !items || items.length === 0) {
     return res.status(400).json({
-      error: "vehicle_number is required"
+      error: "vehicle_number and items are required"
     });
   }
 
   try {
-
     const today = new Date();
+
     const service_date = today.toISOString().split("T")[0];
 
     const next = new Date();
     next.setMonth(today.getMonth() + 3);
+
     const next_service_date = next.toISOString().split("T")[0];
 
-    // =========================
-    // CASE 1: OLD FLOW (V2)
-    // =========================
-    if (!items || items.length === 0) {
-
-      const result = await pool.query(
-        `
-        INSERT INTO Service (
-          vehicle_number,
-          description,
-          cost,
-          service_date,
-          next_service_date,
-          phone_number
-        )
-        VALUES ($1,$2,$3,$4,$5,$6)
-        RETURNING id
-        `,
-        [
-          vehicle_number,
-          description || null,
-          cost || 0,
-          service_date,
-          next_service_date,
-          phone_number || null
-        ]
-      );
-
-      return res.json({
-        message: "Service saved (V2 mode) ✔",
-        id: result.rows[0].id
-      });
-    }
-
-    // =========================
-    // CASE 2: NEW FLOW (V3)
-    // =========================
-
+    // 1. INSERT SERVICE
     const serviceResult = await pool.query(
       `
       INSERT INTO Service (
@@ -117,11 +79,8 @@ app.post("/service", async (req, res) => {
 
     const service_id = serviceResult.rows[0].id;
 
-    let total = 0;
-
+    // 2. INSERT ITEMS
     for (let item of items) {
-
-      total += Number(item.amount);
 
       await pool.query(
         `
@@ -140,16 +99,13 @@ app.post("/service", async (req, res) => {
       );
     }
 
-    // Optional: update total in Service table later (we can add column)
-
-    return res.json({
-      message: "Service saved (V3 billing mode) ✔",
+    res.json({
+      message: "Service + Items saved successfully ✔",
       service_id,
-      total
+      next_service_date
     });
 
   } catch (err) {
-
     console.error(err);
 
     res.status(500).json({
