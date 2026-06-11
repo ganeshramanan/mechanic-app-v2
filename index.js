@@ -612,6 +612,30 @@ app.get("/bill/:id", async (req, res) => {
 });
 
 
+function sendBillWhatsApp(serviceId, phoneNumber) {
+
+  fetch(`${BASE_URL}/bill/${serviceId}`)
+    .then(res => res.json())
+    .then(data => {
+
+      let message = `*VT Motors*\n\n`;
+      message += `Vehicle: ${data.vehicle_number}\n`;
+      message += `Date: ${data.service_date}\n\n`;
+
+      data.items.forEach(item => {
+        message += `${item.name} - ₹${item.amount}\n`;
+      });
+
+      message += `\nTotal: ₹${data.total}\n\n`;
+      message += `Thank you 🚀`;
+
+      const url = `https://wa.me/91${phoneNumber}?text=${encodeURIComponent(message)}`;
+
+      window.open(url, "_blank");
+    });
+}
+
+
 
 
 
