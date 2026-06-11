@@ -34,67 +34,131 @@ app.get("/health", async (req, res) => {
 /* ---------------- ADD SERVICE ---------------- */
 
 app.post("/service", async (req, res) => {
+
   const {
     vehicle_number,
     description,
     cost,
     phone_number,
+    items
   } = req.body;
 
-  if (!vehicle_number || !description || !cost) {
+  if (!vehicle_number) {
     return res.status(400).json({
-      error: "vehicle_number, description and cost are required",
+      error: "vehicle_number is required"
     });
   }
 
   try {
-    const today = new Date();
 
-    const service_date =
-      today.toISOString().split("T")[0];
+    const today = new Date();
+    const service_date = today.toISOString().split("T")[0];
 
     const next = new Date();
     next.setMonth(today.getMonth() + 3);
+    const next_service_date = next.toISOString().split("T")[0];
 
-    const next_service_date =
-      next.toISOString().split("T")[0];
+    // =========================
+    // CASE 1: OLD FLOW (V2)
+    // =========================
+    if (!items || items.length === 0) {
 
-    const result = await pool.query(
+      const result = await pool.query(
+        `
+        INSERT INTO Service (
+          vehicle_number,
+          description,
+          cost,
+          service_date,
+          next_service_date,
+          phone_number
+        )
+        VALUES ($1,$2,$3,$4,$5,$6)
+        RETURNING id
+        `,
+        [
+          vehicle_number,
+          description || null,
+          cost || 0,
+          service_date,
+          next_service_date,
+          phone_number || null
+        ]
+      );
+
+      return res.json({
+        message: "Service saved (V2 mode) ✔",
+        id: result.rows[0].id
+      });
+    }
+
+    // =========================
+    // CASE 2: NEW FLOW (V3)
+    // =========================
+
+    const serviceResult = await pool.query(
       `
       INSERT INTO Service (
         vehicle_number,
-        description,
-        cost,
         service_date,
         next_service_date,
         phone_number
       )
-      VALUES ($1,$2,$3,$4,$5,$6)
+      VALUES ($1,$2,$3,$4)
       RETURNING id
       `,
       [
         vehicle_number,
-        description,
-        cost,
         service_date,
         next_service_date,
-        phone_number || null,
+        phone_number || null
       ]
     );
 
-    res.json({
-      message: "Service added successfully ✔",
-      id: result.rows[0].id,
-      next_service_date,
+    const service_id = serviceResult.rows[0].id;
+
+    let total = 0;
+
+    for (let item of items) {
+
+      total += Number(item.amount);
+
+      await pool.query(
+        `
+        INSERT INTO ServiceItems (
+          service_id,
+          item_name,
+          amount
+        )
+        VALUES ($1,$2,$3)
+        `,
+        [
+          service_id,
+          item.name,
+          item.amount
+        ]
+      );
+    }
+
+    // Optional: update total in Service table later (we can add column)
+
+    return res.json({
+      message: "Service saved (V3 billing mode) ✔",
+      service_id,
+      total
     });
+
   } catch (err) {
+
     console.error(err);
 
     res.status(500).json({
-      error: err.message,
+      error: err.message
     });
   }
 });
+
+
 
 /* ---------------- VEHICLE HISTORY ---------------- */
 
