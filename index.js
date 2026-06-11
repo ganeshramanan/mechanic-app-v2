@@ -391,6 +391,80 @@ VT Motors`;
 });
 
 
+/* ---------------- BILL API ---------------- */
+
+app.get("/bill/:id", async (req, res) => {
+
+  try {
+
+    const id = req.params.id;
+
+    // 1. Get service details
+    const serviceResult = await pool.query(
+      `
+      SELECT
+        id,
+        vehicle_number,
+        phone_number,
+        TO_CHAR(service_date, 'DD/MM/YYYY') AS service_date
+      FROM Service
+      WHERE id = $1
+      `,
+      [id]
+    );
+
+    if (serviceResult.rows.length === 0) {
+      return res.status(404).json({
+        error: "Service not found"
+      });
+    }
+
+    const service = serviceResult.rows[0];
+
+    // 2. Get service items
+    const itemsResult = await pool.query(
+      `
+      SELECT
+        item_name,
+        amount
+      FROM ServiceItems
+      WHERE service_id = $1
+      `,
+      [id]
+    );
+
+    const items = itemsResult.rows.map(item => ({
+      name: item.item_name,
+      amount: Number(item.amount)
+    }));
+
+    // 3. Calculate total
+    const total = items.reduce(
+      (sum, i) => sum + i.amount,
+      0
+    );
+
+    // 4. Return bill structure
+    res.json({
+      service_id: service.id,
+      vehicle_number: service.vehicle_number,
+      phone_number: service.phone_number,
+      service_date: service.service_date,
+      items,
+      total
+    });
+
+  } catch (err) {
+
+    console.error(err);
+
+    res.status(500).json({
+      error: err.message
+    });
+  }
+});
+
+
 
 
 
