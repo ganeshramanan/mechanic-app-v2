@@ -292,7 +292,7 @@ Your vehicle ${row.vehicle_number} is due for service on ${row.next_service_date
 Please contact us to schedule your next service.
 
 Thanks,
-VT Motors;
+VT Motors`;
 
       return {
 
