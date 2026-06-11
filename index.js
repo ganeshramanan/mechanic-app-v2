@@ -390,6 +390,153 @@ VT Motors`;
   }
 });
 
+const PDFDocument = require("pdfkit");
+
+/* ---------------- PDF INVOICE ---------------- */
+
+app.get("/bill/:id/pdf", async (req, res) => {
+
+  try {
+
+    const id = req.params.id;
+
+    // 1. Get service
+    const serviceResult = await pool.query(
+      `
+      SELECT
+        id,
+        vehicle_number,
+        phone_number,
+        TO_CHAR(service_date, 'DD/MM/YYYY') AS service_date
+      FROM Service
+      WHERE id = $1
+      `,
+      [id]
+    );
+
+    if (serviceResult.rows.length === 0) {
+      return res.status(404).send("Bill not found");
+    }
+
+    const service = serviceResult.rows[0];
+
+    // 2. Get items
+    const itemsResult = await pool.query(
+      `
+      SELECT item_name, amount
+      FROM ServiceItems
+      WHERE service_id = $1
+      `,
+      [id]
+    );
+
+    const items = itemsResult.rows;
+
+    const total = items.reduce(
+      (sum, i) => sum + Number(i.amount),
+      0
+    );
+
+    // 3. Create PDF
+    const doc = new PDFDocument({ margin: 50 });
+
+    res.setHeader(
+      "Content-Type",
+      "application/pdf"
+    );
+
+    res.setHeader(
+      "Content-Disposition",
+      `inline; filename=bill-${id}.pdf`
+    );
+
+    doc.pipe(res);
+
+    // =========================
+    // HEADER
+    // =========================
+    doc
+      .fontSize(20)
+      .text("🏍️ Bike Service Invoice", { align: "center" });
+
+    doc.moveDown();
+
+    doc
+      .fontSize(12)
+      .text("Workshop: VT Motors")
+      .text(`Invoice No: ${service.id}`)
+      .text(`Date: ${service.service_date}`)
+      .text(`Vehicle: ${service.vehicle_number}`)
+      .text(`Phone: ${service.phone_number || "-"}`);
+
+    doc.moveDown();
+    doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
+
+    doc.moveDown();
+
+    // =========================
+    // TABLE HEADER
+    // =========================
+    doc
+      .fontSize(12)
+      .text("Item", 50, doc.y)
+      .text("Amount", 400, doc.y);
+
+    doc.moveDown();
+
+    doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
+
+    doc.moveDown();
+
+    // =========================
+    // ITEMS
+    // =========================
+    items.forEach((item) => {
+
+      doc
+        .text(item.item_name, 50)
+        .text(`₹ ${item.amount}`, 400);
+
+      doc.moveDown();
+    });
+
+    doc.moveDown();
+    doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
+
+    doc.moveDown();
+
+    // =========================
+    // TOTAL
+    // =========================
+    doc
+      .fontSize(14)
+      .text(`TOTAL: ₹ ${total}`, {
+        align: "right"
+      });
+
+    doc.moveDown();
+
+    // =========================
+    // FOOTER
+    // =========================
+    doc
+      .fontSize(10)
+      .text(
+        "Thank you for visiting VT Motors 🚀",
+        { align: "center" }
+      );
+
+    doc.end();
+
+  } catch (err) {
+
+    console.error(err);
+
+    res.status(500).send(err.message);
+  }
+});
+
+
 
 /* ---------------- BILL API ---------------- */
 
