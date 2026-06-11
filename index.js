@@ -418,7 +418,7 @@ app.get("/bill/:id/pdf", async (req, res) => {
     // =========================
     doc
       .fontSize(20)
-      .text("🏍️ Bike Service Invoice", { align: "center" });
+      .text("Bike Service Invoice", { align: "center" });
 
     doc.moveDown();
 
@@ -456,7 +456,7 @@ app.get("/bill/:id/pdf", async (req, res) => {
 
       doc
         .text(item.item_name, 50)
-        .text(`₹ ${item.amount}`, 400);
+        .text(` ${item.amount}`, 400);
 
       doc.moveDown();
     });
@@ -471,7 +471,7 @@ app.get("/bill/:id/pdf", async (req, res) => {
     // =========================
     doc
       .fontSize(14)
-      .text(`TOTAL: ₹ ${total}`, {
+      .text(`TOTAL:  ${total}`, {
         align: "right"
       });
 
@@ -483,7 +483,7 @@ app.get("/bill/:id/pdf", async (req, res) => {
     doc
       .fontSize(10)
       .text(
-        "Thank you for visiting VT Motors 🚀",
+        "Thank you for visiting VT Motors",
         { align: "center" }
       );
 
