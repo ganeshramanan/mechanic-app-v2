@@ -125,16 +125,22 @@ app.get("/vehicle/:number", async (req, res) => {
     const result = await pool.query(
       `
       SELECT
-        id,
-        vehicle_number,
-        description,
-        cost,
-        phone_number,
-        TO_CHAR(service_date, 'DD/MM/YYYY') AS service_date,
-        TO_CHAR(next_service_date, 'DD/MM/YYYY') AS next_service_date
-      FROM Service
-      WHERE UPPER(vehicle_number)=UPPER($1)
-      ORDER BY service_date DESC
+        s.id,
+        s.vehicle_number,
+        s.phone_number,
+        TO_CHAR(s.service_date, 'DD/MM/YYYY') AS service_date,
+        TO_CHAR(s.next_service_date, 'DD/MM/YYYY') AS next_service_date,
+        json_agg(
+          json_build_object(
+            'name', si.item_name,
+            'amount', si.amount
+          )
+        ) AS items
+      FROM Service s
+      LEFT JOIN ServiceItems si ON s.id = si.service_id
+      WHERE UPPER(s.vehicle_number) = UPPER($1)
+      GROUP BY s.id
+      ORDER BY s.id DESC
       `,
       [number]
     );
@@ -142,12 +148,11 @@ app.get("/vehicle/:number", async (req, res) => {
     res.json(result.rows);
   } catch (err) {
     console.error(err);
-
-    res.status(500).json({
-      error: err.message,
-    });
+    res.status(500).json({ error: err.message });
   }
 });
+
+
 
 /* ---------------- DUE SERVICES ---------------- */
 
@@ -497,75 +502,36 @@ app.get("/bill/:id/pdf", async (req, res) => {
 /* ---------------- BILL API ---------------- */
 
 app.get("/bill/:id", async (req, res) => {
-
   try {
-
     const id = req.params.id;
 
-    // 1. Get service details
-    const serviceResult = await pool.query(
+    const result = await pool.query(
       `
       SELECT
-        id,
-        vehicle_number,
-        phone_number,
-        TO_CHAR(service_date, 'DD/MM/YYYY') AS service_date
-      FROM Service
-      WHERE id = $1
+        s.vehicle_number,
+        s.phone_number,
+        json_agg(
+          json_build_object(
+            'name', si.item_name,
+            'amount', si.amount
+          )
+        ) AS items,
+        COALESCE(SUM(si.amount),0) AS total
+      FROM Service s
+      LEFT JOIN ServiceItems si ON s.id = si.service_id
+      WHERE s.id = $1
+      GROUP BY s.id
       `,
       [id]
     );
 
-    if (serviceResult.rows.length === 0) {
-      return res.status(404).json({
-        error: "Service not found"
-      });
-    }
-
-    const service = serviceResult.rows[0];
-
-    // 2. Get service items
-    const itemsResult = await pool.query(
-      `
-      SELECT
-        item_name,
-        amount
-      FROM ServiceItems
-      WHERE service_id = $1
-      `,
-      [id]
-    );
-
-    const items = itemsResult.rows.map(item => ({
-      name: item.item_name,
-      amount: Number(item.amount)
-    }));
-
-    // 3. Calculate total
-    const total = items.reduce(
-      (sum, i) => sum + i.amount,
-      0
-    );
-
-    // 4. Return bill structure
-    res.json({
-      service_id: service.id,
-      vehicle_number: service.vehicle_number,
-      phone_number: service.phone_number,
-      service_date: service.service_date,
-      items,
-      total
-    });
-
+    res.json(result.rows[0]);
   } catch (err) {
-
     console.error(err);
-
-    res.status(500).json({
-      error: err.message
-    });
+    res.status(500).json({ error: err.message });
   }
 });
+
 
 
 
