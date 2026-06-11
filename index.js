@@ -224,6 +224,71 @@ app.get("/reset-db", async (req, res) => {
   }
 });
 
+/* ---------------- WHATSAPP REMINDERS ---------------- */
+
+app.get("/whatsapp-reminders", async (req, res) => {
+  try {
+    const today = new Date();
+
+    const next7Days = new Date();
+    next7Days.setDate(today.getDate() + 7);
+
+    const next7Str =
+      next7Days.toISOString().split("T")[0];
+
+    const result = await pool.query(
+      `
+      SELECT
+        id,
+        vehicle_number,
+        phone_number,
+        TO_CHAR(next_service_date, 'DD/MM/YYYY')
+          AS next_service_date
+      FROM Service
+      WHERE next_service_date <= $1::date
+        AND phone_number IS NOT NULL
+        AND TRIM(phone_number) <> ''
+      ORDER BY next_service_date ASC
+      `,
+      [next7Str]
+    );
+
+    const reminders = result.rows.map((row) => {
+
+      const message =
+`Dear Customer,
+
+Your vehicle ${row.vehicle_number} is due for service on ${row.next_service_date}.
+
+Please contact us to schedule your next service.
+
+Thanks,
+Workshop`;
+
+      return {
+        id: row.id,
+        vehicle_number: row.vehicle_number,
+        phone_number: row.phone_number,
+        next_service_date: row.next_service_date,
+        whatsapp_url:
+          `https://wa.me/91${row.phone_number}?text=${encodeURIComponent(message)}`
+      };
+    });
+
+    res.json(reminders);
+
+  } catch (err) {
+    console.error(err);
+
+    res.status(500).json({
+      error: err.message,
+    });
+  }
+});
+
+
+
+
 /* ---------------- START SERVER ---------------- */
 
 const PORT = process.env.PORT || 3000;
