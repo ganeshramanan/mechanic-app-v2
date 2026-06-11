@@ -226,7 +226,6 @@ app.get("/reset-db", async (req, res) => {
 
 /* ---------------- WHATSAPP REMINDERS ---------------- */
 
-/* ---------------- WHATSAPP REMINDERS ---------------- */
 
 app.get("/whatsapp-reminders", async (req, res) => {
   try {
@@ -293,7 +292,7 @@ Your vehicle ${row.vehicle_number} is due for service on ${row.next_service_date
 Please contact us to schedule your next service.
 
 Thanks,
-Workshop`;
+VT Motors;
 
       return {
 
