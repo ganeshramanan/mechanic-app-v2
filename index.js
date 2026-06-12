@@ -303,25 +303,27 @@ app.get("/whatsapp-reminders", async (req, res) => {
 
     const result = await pool.query(
       `
-      SELECT
-        id,
-        vehicle_number,
-        phone_number,
+     SELECT
+  id,
+  vehicle_number,
+  phone_number,
+  next_service_date,
+  TO_CHAR(next_service_date, 'DD/MM/YYYY') AS next_service_date_formatted,
 
-        next_service_date,
+  CASE
+    WHEN next_service_date < CURRENT_DATE THEN 'OVERDUE'
+    WHEN next_service_date <= CURRENT_DATE + INTERVAL '7 days' THEN 'DUE_SOON'
+    ELSE 'OK'
+  END AS status
 
-        TO_CHAR(
-          next_service_date,
-          'DD/MM/YYYY'
-        ) AS next_service_date_formatted
+FROM Service
+WHERE phone_number IS NOT NULL
+  AND TRIM(phone_number) <> ''
+  AND next_service_date <= CURRENT_DATE + INTERVAL '7 days'
+ORDER BY next_service_date ASC
 
-      FROM Service
 
-      WHERE phone_number IS NOT NULL
-        AND TRIM(phone_number) <> ''
-        AND next_service_date <= $1::date
 
-      ORDER BY next_service_date ASC
       `,
       [next7Str]
     );
