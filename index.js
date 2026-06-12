@@ -70,10 +70,12 @@ app.post("/service", async (req, res) => {
         next_service_date,
         phone_number
       )
-      VALUES ($1,$2,$3,$4)
+      VALUES ($1,$2,$3,$4,$5,$6)
       RETURNING id
       `,
       [
+        customer_name,
+        bike_model,
         vehicle_number,
         service_date,
         next_service_date,
