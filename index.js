@@ -286,65 +286,31 @@ app.get("/reset-db", async (req, res) => {
 
 app.get("/whatsapp-reminders", async (req, res) => {
   try {
-
-    const today = new Date();
-
-    const todayStr =
-      today.toISOString().split("T")[0];
-
-    const next7Days = new Date();
-
-    next7Days.setDate(
-      today.getDate() + 7
-    );
-
-    const next7Str =
-      next7Days.toISOString().split("T")[0];
-
     const result = await pool.query(
       `
-     SELECT
-  id,
-  vehicle_number,
-  phone_number,
-  next_service_date,
-  TO_CHAR(next_service_date, 'DD/MM/YYYY') AS next_service_date_formatted,
+      SELECT
+        id,
+        vehicle_number,
+        phone_number,
+        next_service_date,
+        TO_CHAR(next_service_date, 'DD/MM/YYYY') AS next_service_date_formatted,
 
-  CASE
-    WHEN next_service_date < CURRENT_DATE THEN 'OVERDUE'
-    WHEN next_service_date <= CURRENT_DATE + INTERVAL '7 days' THEN 'DUE_SOON'
-    ELSE 'OK'
-  END AS status
+        CASE
+          WHEN next_service_date < CURRENT_DATE THEN 'OVERDUE'
+          WHEN next_service_date <= CURRENT_DATE + INTERVAL '7 days' THEN 'DUE_SOON'
+          ELSE 'OK'
+        END AS status
 
-FROM Service
-WHERE phone_number IS NOT NULL
-  AND TRIM(phone_number) <> ''
-  AND next_service_date <= CURRENT_DATE + INTERVAL '7 days'
-ORDER BY next_service_date ASC
-
-
-
-      `,
-      [next7Str]
+      FROM service
+      WHERE phone_number IS NOT NULL
+        AND TRIM(phone_number) <> ''
+        AND next_service_date <= CURRENT_DATE + INTERVAL '7 days'
+      ORDER BY next_service_date ASC
+      `
     );
 
     const reminders = result.rows.map((row) => {
-
-      let status = "OK";
-
-      if (
-        row.next_service_date
-          .toISOString()
-          .split("T")[0] < todayStr
-      ) {
-        status = "OVERDUE";
-      }
-      else {
-        status = "DUE_SOON";
-      }
-
-      const message =
-`Dear Customer,
+      const message = `Dear Customer,
 
 Your vehicle ${row.vehicle_number} is due for service on ${row.next_service_date_formatted}.
 
@@ -354,38 +320,23 @@ Thanks,
 VT Motors`;
 
       return {
-
         id: row.id,
-
-        vehicle_number:
-          row.vehicle_number,
-
-        phone_number:
-          row.phone_number,
-
-        next_service_date:
-          row.next_service_date_formatted,
-
-        status,
-
-        whatsapp_url:
-          `https://wa.me/91${row.phone_number}?text=${encodeURIComponent(message)}`
+        vehicle_number: row.vehicle_number,
+        phone_number: row.phone_number,
+        next_service_date: row.next_service_date_formatted,
+        status: row.status,   // IMPORTANT: use SQL status directly
+        whatsapp_url: `https://wa.me/91${row.phone_number}?text=${encodeURIComponent(message)}`
       };
     });
 
     res.json(reminders);
-
   } catch (err) {
-
     console.error(err);
-
-    res.status(500).json({
-      error: err.message,
-    });
+    res.status(500).json({ error: err.message });
   }
 });
 
-const PDFDocument = require("pdfkit");
+
 
 /* ---------------- PDF INVOICE ---------------- */
 
