@@ -116,7 +116,7 @@ app.post("/service", async (req, res) => {
     // 4. ITEMS
     for (let item of items) {
       await pool.query(
-        `INSERT INTO ServiceItems(service_id, item_name, amount)
+        `INSERT INTO Service_Items(service_id, item_name, amount)
          VALUES ($1,$2,$3)`,
         [service_id, item.name, item.amount]
       );
@@ -166,7 +166,7 @@ app.get("/vehicle/:number", async (req, res) => {
       FROM Services s
       JOIN Vehicles v ON v.id = s.vehicle_id
       JOIN Customers c ON c.id = v.customer_id
-      LEFT JOIN ServiceItems si ON si.service_id = s.id
+      LEFT JOIN Service_Items si ON si.service_id = s.id
       WHERE UPPER(v.vehicle_number) = UPPER($1)
       GROUP BY s.id, v.vehicle_number, v.bike_model, c.name, c.phone
       ORDER BY s.id DESC
