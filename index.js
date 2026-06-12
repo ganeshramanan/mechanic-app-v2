@@ -36,6 +36,8 @@ app.get("/health", async (req, res) => {
 app.post("/service", async (req, res) => {
 
   const {
+    customer_name,
+    bike_model,
     vehicle_number,
     phone_number,
     items
@@ -61,6 +63,8 @@ app.post("/service", async (req, res) => {
     const serviceResult = await pool.query(
       `
       INSERT INTO Service (
+        customer_name,
+        bike_model,
         vehicle_number,
         service_date,
         next_service_date,
