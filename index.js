@@ -555,8 +555,8 @@ app.get("/bill/:id", async (req, res) => {
         v.bike_model,
         TO_CHAR(s.service_date, 'DD/MM/YYYY') AS service_date
       FROM services s
-      JOIN customers c ON s.customer_id = c.id
       JOIN vehicles v ON s.vehicle_id = v.id
+      JOIN customers c ON v.customer_id = c.id
       WHERE s.id = $1
       `,
       [id]
@@ -579,7 +579,10 @@ app.get("/bill/:id", async (req, res) => {
 
     const items = itemsResult.rows;
 
-    let total = items.reduce((sum, i) => sum + Number(i.amount), 0);
+    const total = items.reduce(
+      (sum, i) => sum + Number(i.amount),
+      0
+    );
 
     res.json({
       ...service,
@@ -592,6 +595,8 @@ app.get("/bill/:id", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+
 
 
 
