@@ -287,54 +287,57 @@ app.get("/whatsapp-reminders", async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT
-        id,
-        vehicle_number,
-        phone_number,
-        next_service_date,
-        TO_CHAR(next_service_date, 'DD/MM/YYYY') AS next_service_date_formatted,
+        s.id,
+        v.vehicle_number,
+        c.phone AS phone_number,
+        v.bike_model,
+        s.next_service_date,
 
         CASE
-          WHEN next_service_date < CURRENT_DATE THEN 'OVERDUE'
-          WHEN next_service_date <= CURRENT_DATE + 7 THEN 'DUE_SOON'
+          WHEN s.next_service_date < CURRENT_DATE THEN 'OVERDUE'
+          WHEN s.next_service_date <= CURRENT_DATE + INTERVAL '7 days' THEN 'DUE_SOON'
           ELSE 'OK'
         END AS status
 
-      FROM Service
-      WHERE phone_number IS NOT NULL
-        AND TRIM(phone_number) <> ''
-      ORDER BY next_service_date ASC
+      FROM services s
+      JOIN vehicles v ON s.vehicle_id = v.id
+      JOIN customers c ON s.customer_id = c.id
+
+      WHERE c.phone IS NOT NULL
+        AND TRIM(c.phone) <> ''
+      ORDER BY s.next_service_date ASC
     `);
 
-    const rows = result.rows || [];
-
-    const reminders = rows.map((row) => {
+    const reminders = result.rows.map((row) => {
       const message =
-`VT Motors Reminder
+`🏍️ VT Motors Reminder
 
 Vehicle: ${row.vehicle_number}
-Due Date: ${row.next_service_date_formatted}
-Status: ${row.status}
+Bike: ${row.bike_model || "-"}
+Due Date: ${row.next_service_date}
 
-Please contact us for service.`;
+Please service your vehicle soon.
+Thank you`;
 
       return {
         id: row.id,
         vehicle_number: row.vehicle_number,
         phone_number: row.phone_number,
-        next_service_date: row.next_service_date_formatted,
+        next_service_date: row.next_service_date,
         status: row.status,
-        whatsapp_url:
-          `https://wa.me/91${row.phone_number}?text=${encodeURIComponent(message)}`
+        whatsapp_url: `https://wa.me/91${row.phone_number}?text=${encodeURIComponent(message)}`
       };
     });
 
     res.json(reminders);
 
   } catch (err) {
-    console.error("whatsapp-reminders error:", err);
-    res.status(500).json([]);
+    console.error(err);
+    res.status(500).json({ error: err.message });
   }
 });
+
+
 
 
 
