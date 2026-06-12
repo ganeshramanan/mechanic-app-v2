@@ -513,8 +513,7 @@ app.get("/bill/:id", async (req, res) => {
         vehicle_number,
         phone_number,
         service_date,
-        next_service_date,
-        invoice_number
+        next_service_date
       FROM Service
       WHERE id = $1
       `,
