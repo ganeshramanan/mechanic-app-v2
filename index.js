@@ -295,14 +295,13 @@ app.get("/whatsapp-reminders", async (req, res) => {
 
         CASE
           WHEN next_service_date < CURRENT_DATE THEN 'OVERDUE'
-          WHEN next_service_date <= CURRENT_DATE + INTERVAL '7 days' THEN 'DUE_SOON'
+          WHEN next_service_date <= CURRENT_DATE + 7 THEN 'DUE_SOON'
           ELSE 'OK'
         END AS status
 
-      FROM service
+      FROM Service
       WHERE phone_number IS NOT NULL
         AND TRIM(phone_number) <> ''
-        AND next_service_date IS NOT NULL
       ORDER BY next_service_date ASC
     `);
 
@@ -310,14 +309,13 @@ app.get("/whatsapp-reminders", async (req, res) => {
 
     const reminders = rows.map((row) => {
       const message =
-`Dear Customer,
+`VT Motors Reminder
 
-Your vehicle ${row.vehicle_number} is due for service on ${row.next_service_date_formatted}.
+Vehicle: ${row.vehicle_number}
+Due Date: ${row.next_service_date_formatted}
+Status: ${row.status}
 
-Please contact us to schedule your next service.
-
-Thanks,
-VT Motors`;
+Please contact us for service.`;
 
       return {
         id: row.id,
@@ -325,7 +323,8 @@ VT Motors`;
         phone_number: row.phone_number,
         next_service_date: row.next_service_date_formatted,
         status: row.status,
-        whatsapp_url: `https://wa.me/91${row.phone_number}?text=${encodeURIComponent(message)}`
+        whatsapp_url:
+          `https://wa.me/91${row.phone_number}?text=${encodeURIComponent(message)}`
       };
     });
 
@@ -333,13 +332,12 @@ VT Motors`;
 
   } catch (err) {
     console.error("whatsapp-reminders error:", err);
-
-    res.status(500).json({
-      error: err.message,
-      reminders: []   // ✅ IMPORTANT: prevents frontend crash
-    });
+    res.status(500).json([]);
   }
 });
+
+
+
 
 
 
