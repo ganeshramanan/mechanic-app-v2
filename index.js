@@ -296,7 +296,6 @@ app.get("/whatsapp-reminders", async (req, res) => {
         CASE
           WHEN s.next_service_date < CURRENT_DATE THEN 'OVERDUE'
           WHEN s.next_service_date <= CURRENT_DATE + INTERVAL '7 days' THEN 'DUE_SOON'
-          ELSE 'OK'
         END AS status
 
       FROM services s
@@ -304,12 +303,17 @@ app.get("/whatsapp-reminders", async (req, res) => {
       LEFT JOIN customers c ON v.customer_id = c.id
 
       WHERE s.next_service_date IS NOT NULL
+        AND s.next_service_date <= CURRENT_DATE + INTERVAL '7 days'
+
       ORDER BY s.next_service_date ASC
     `);
 
-    const reminders = result.rows.map((row) => {
-      const message =
-`VT Motors Reminder
+    const reminders = result.rows
+      .filter(r => r.status === "OVERDUE" || r.status === "DUE_SOON")
+      .map((row) => {
+
+        const message =
+`🏍️ VT Motors Reminder
 
 Vehicle: ${row.vehicle_number}
 Bike: ${row.bike_model || "-"}
@@ -317,16 +321,16 @@ Due Date: ${row.next_service_date}
 
 Please service your vehicle soon.`;
 
-      return {
-        id: row.id,
-        vehicle_number: row.vehicle_number,
-        bike_model: row.bike_model,
-        phone_number: row.phone_number,
-        next_service_date: row.next_service_date,
-        status: row.status,
-        whatsapp_url: `https://wa.me/91${row.phone_number}?text=${encodeURIComponent(message)}`
-      };
-    });
+        return {
+          id: row.id,
+          vehicle_number: row.vehicle_number,
+          bike_model: row.bike_model,
+          phone_number: row.phone_number,
+          next_service_date: row.next_service_date,
+          status: row.status,
+          whatsapp_url: `https://wa.me/91${row.phone_number}?text=${encodeURIComponent(message)}`
+        };
+      });
 
     res.json(reminders);
 
@@ -335,6 +339,7 @@ Please service your vehicle soon.`;
     res.status(500).json({ error: err.message });
   }
 });
+
 
 
 
