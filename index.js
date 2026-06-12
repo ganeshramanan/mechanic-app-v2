@@ -195,48 +195,44 @@ app.get("/vehicle/:number", async (req, res) => {
 app.get("/due-services", async (req, res) => {
   try {
     const today = new Date();
-    const todayStr = today.toISOString().split("T")[0];
-
-    const next7Days = new Date();
-    next7Days.setDate(today.getDate() + 7);
-
-    const next7Str =
-      next7Days.toISOString().split("T")[0];
+    const next7 = new Date();
+    next7.setDate(today.getDate() + 7);
 
     const result = await pool.query(
       `
-      SELECT
-        id,
-        vehicle_number,
-        description,
-        cost,
-        phone_number,
-        TO_CHAR(service_date, 'DD/MM/YYYY') AS service_date,
-        TO_CHAR(next_service_date, 'DD/MM/YYYY') AS next_service_date,
+      SELECT 
+        s.id,
+        v.vehicle_number,
+        v.bike_model,
+        c.name AS customer_name,
+        c.phone AS phone_number,
+        TO_CHAR(s.service_date, 'DD/MM/YYYY') AS service_date,
+        TO_CHAR(s.next_service_date, 'DD/MM/YYYY') AS next_service_date,
 
         CASE
-          WHEN next_service_date < $1::date
-            THEN 'OVERDUE'
-          WHEN next_service_date <= $2::date
-            THEN 'DUE_SOON'
+          WHEN s.next_service_date < CURRENT_DATE THEN 'OVERDUE'
+          WHEN s.next_service_date <= $1::date THEN 'DUE_SOON'
           ELSE 'OK'
         END AS status
 
-      FROM Service
-      ORDER BY next_service_date ASC
+      FROM services s
+      JOIN vehicles v ON s.vehicle_id = v.id
+      JOIN customers c ON v.customer_id = c.id
+      ORDER BY s.next_service_date ASC
       `,
-      [todayStr, next7Str]
+      [next7.toISOString().split("T")[0]]
     );
 
     res.json(result.rows);
+
   } catch (err) {
     console.error(err);
-
-    res.status(500).json({
-      error: err.message,
-    });
+    res.status(500).json({ error: err.message });
   }
 });
+
+
+
 
 /* ---------------- DEBUG DB ---------------- */
 
@@ -450,11 +446,11 @@ app.get("/bill/:id/pdf", async (req, res) => {
     doc.moveDown();
 
     items.forEach(i => {
-      doc.text(`${i.item_name} - ₹${i.amount}`);
+      doc.text(`${i.item_name} - ${i.amount}`);
     });
 
     doc.moveDown();
-    doc.fontSize(14).text(`TOTAL: ₹${total}`, { align: "right" });
+    doc.fontSize(14).text(`TOTAL: ${total}`, { align: "right" });
 
     doc.end();
 
