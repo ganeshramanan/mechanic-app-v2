@@ -289,8 +289,8 @@ app.get("/whatsapp-reminders", async (req, res) => {
       SELECT
         s.id,
         v.vehicle_number,
-        c.phone AS phone_number,
         v.bike_model,
+        c.phone AS phone_number,
         s.next_service_date,
 
         CASE
@@ -301,27 +301,26 @@ app.get("/whatsapp-reminders", async (req, res) => {
 
       FROM services s
       JOIN vehicles v ON s.vehicle_id = v.id
-      JOIN customers c ON s.customer_id = c.id
+      LEFT JOIN customers c ON v.customer_id = c.id
 
-      WHERE c.phone IS NOT NULL
-        AND TRIM(c.phone) <> ''
+      WHERE s.next_service_date IS NOT NULL
       ORDER BY s.next_service_date ASC
     `);
 
     const reminders = result.rows.map((row) => {
       const message =
-`🏍️ VT Motors Reminder
+`VT Motors Reminder
 
 Vehicle: ${row.vehicle_number}
 Bike: ${row.bike_model || "-"}
 Due Date: ${row.next_service_date}
 
-Please service your vehicle soon.
-Thank you`;
+Please service your vehicle soon.`;
 
       return {
         id: row.id,
         vehicle_number: row.vehicle_number,
+        bike_model: row.bike_model,
         phone_number: row.phone_number,
         next_service_date: row.next_service_date,
         status: row.status,
@@ -332,7 +331,7 @@ Thank you`;
     res.json(reminders);
 
   } catch (err) {
-    console.error(err);
+    console.error("whatsapp-reminders error:", err);
     res.status(500).json({ error: err.message });
   }
 });
