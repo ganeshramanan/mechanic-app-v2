@@ -392,23 +392,22 @@ const PDFDocument = require("pdfkit");
 /* ---------------- PDF INVOICE ---------------- */
 
 app.get("/bill/:id/pdf", async (req, res) => {
-
   try {
-
     const id = req.params.id;
 
-    // 1. Get service
     const serviceResult = await pool.query(
       `
-      SELECT
-        id,
-        vehicle_number,
-        customer_name,
-        bike_model,
-        phone_number,
-        TO_CHAR(service_date, 'DD/MM/YYYY') AS service_date
-      FROM Service
-      WHERE id = $1
+      SELECT 
+        s.id,
+        c.name AS customer_name,
+        c.phone AS phone_number,
+        v.vehicle_number,
+        v.bike_model,
+        TO_CHAR(s.service_date, 'DD/MM/YYYY') AS service_date
+      FROM services s
+      JOIN vehicles v ON s.vehicle_id = v.id
+      JOIN customers c ON v.customer_id = c.id
+      WHERE s.id = $1
       `,
       [id]
     );
@@ -419,11 +418,10 @@ app.get("/bill/:id/pdf", async (req, res) => {
 
     const service = serviceResult.rows[0];
 
-    // 2. Get items
     const itemsResult = await pool.query(
       `
       SELECT item_name, amount
-      FROM ServiceItems
+      FROM service_items
       WHERE service_id = $1
       `,
       [id]
@@ -431,111 +429,42 @@ app.get("/bill/:id/pdf", async (req, res) => {
 
     const items = itemsResult.rows;
 
-    const total = items.reduce(
-      (sum, i) => sum + Number(i.amount),
-      0
-    );
+    const total = items.reduce((sum, i) => sum + Number(i.amount), 0);
 
-    // 3. Create PDF
     const doc = new PDFDocument({ margin: 50 });
 
-    res.setHeader(
-      "Content-Type",
-      "application/pdf"
-    );
-
-    res.setHeader(
-      "Content-Disposition",
-      `inline; filename=bill-${id}.pdf`
-    );
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `inline; filename=bill-${id}.pdf`);
 
     doc.pipe(res);
 
-    // =========================
-    // HEADER
-    // =========================
-    doc
-      .fontSize(20)
-      .text("Bike Service Invoice", { align: "center" });
-
+    doc.fontSize(18).text("Bike Service Invoice", { align: "center" });
     doc.moveDown();
 
-    doc
-      .fontSize(12)
-      .text("Workshop: VT Motors")
-      .text(`Invoice No: ${service.id}`)
-      .text(`Date: ${service.service_date}`)
-      .text(`Vehicle: ${service.vehicle_number}`)
+    doc.fontSize(12)
       .text(`Customer: ${service.customer_name}`)
-      .text(`Bike Model: ${service.bike_model}`)
-      .text(`Phone: ${service.phone_number || "-"}`);
-
-    doc.moveDown();
-    doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
-
-    doc.moveDown();
-
-    // =========================
-    // TABLE HEADER
-    // =========================
-    doc
-      .fontSize(12)
-      .text("Item", 50, doc.y)
-      .text("Amount", 400, doc.y);
+      .text(`Bike: ${service.bike_model}`)
+      .text(`Vehicle: ${service.vehicle_number}`)
+      .text(`Date: ${service.service_date}`);
 
     doc.moveDown();
 
-    doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
-
-    doc.moveDown();
-
-    // =========================
-    // ITEMS
-    // =========================
-    items.forEach((item) => {
-
-      doc
-        .text(item.item_name, 50)
-        .text(` ${item.amount}`, 400);
-
-      doc.moveDown();
+    items.forEach(i => {
+      doc.text(`${i.item_name} - ₹${i.amount}`);
     });
 
     doc.moveDown();
-    doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
-
-    doc.moveDown();
-
-    // =========================
-    // TOTAL
-    // =========================
-    doc
-      .fontSize(14)
-      .text(`TOTAL:  ${total}`, {
-        align: "right"
-      });
-
-    doc.moveDown();
-
-    // =========================
-    // FOOTER
-    // =========================
-    doc
-      .fontSize(10)
-      .text(
-        "Thank you for visiting VT Motors",
-        { align: "center" }
-      );
+    doc.fontSize(14).text(`TOTAL: ₹${total}`, { align: "right" });
 
     doc.end();
 
   } catch (err) {
-
     console.error(err);
-
     res.status(500).send(err.message);
   }
 });
+
+
 
 
 
