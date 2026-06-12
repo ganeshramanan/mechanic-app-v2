@@ -438,6 +438,8 @@ app.get("/bill/:id/pdf", async (req, res) => {
       .text(`Invoice No: ${service.id}`)
       .text(`Date: ${service.service_date}`)
       .text(`Vehicle: ${service.vehicle_number}`)
+      .text(`Customer: ${service.customer_name}`)
+      .text(`Bike Model: ${service.bike_model}`)
       .text(`Phone: ${service.phone_number || "-"}`);
 
     doc.moveDown();
@@ -562,6 +564,8 @@ app.get("/bill/:id", async (req, res) => {
     res.json({
       id: service.id,
       vehicle_number: service.vehicle_number,
+      customer_name: service.customer_name,
+      bike_model: service.bike_model,
       phone_number: service.phone_number,
       invoice_number: service.invoice_number,
       service_date: service.service_date,
