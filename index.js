@@ -63,23 +63,23 @@ app.post("/service", async (req, res) => {
     const serviceResult = await pool.query(
       `
       INSERT INTO Service (
-        customer_name,
-        bike_model,
         vehicle_number,
         service_date,
         next_service_date,
-        phone_number
+        phone_number,
+        customer_name,
+        bike_model,
       )
       VALUES ($1,$2,$3,$4,$5,$6)
       RETURNING id
       `,
       [
-        customer_name,
-        bike_model,
         vehicle_number,
         service_date,
         next_service_date,
-        phone_number || null
+        phone_number || null,
+        customer_name,
+        bike_model,
       ]
     );
 
