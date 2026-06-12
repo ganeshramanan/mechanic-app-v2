@@ -133,6 +133,8 @@ app.get("/vehicle/:number", async (req, res) => {
       SELECT
         s.id,
         s.vehicle_number,
+        s.customer_name,
+        s.bike_model,
         s.phone_number,
         TO_CHAR(s.service_date, 'DD/MM/YYYY') AS service_date,
         TO_CHAR(s.next_service_date, 'DD/MM/YYYY') AS next_service_date,
