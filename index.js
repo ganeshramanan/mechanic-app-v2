@@ -34,7 +34,6 @@ app.get("/health", async (req, res) => {
 /* ---------------- ADD SERVICE ---------------- */
 
 app.post("/service", async (req, res) => {
-
   const {
     customer_name,
     bike_model,
@@ -43,82 +42,101 @@ app.post("/service", async (req, res) => {
     items
   } = req.body;
 
-  if (!vehicle_number || !items || items.length === 0) {
-    return res.status(400).json({
-      error: "vehicle_number and items are required"
-    });
-  }
 
   try {
-    const today = new Date();
 
+
+    // 1. CUSTOMER
+    let customer = await pool.query(
+      `SELECT id FROM Customers WHERE phone = $1`,
+      [phone_number]
+    );
+
+
+    let customer_id;
+
+
+    if (customer.rows.length === 0) {
+      const newCustomer = await pool.query(
+        `INSERT INTO Customers(name, phone)
+         VALUES ($1,$2)
+         RETURNING id`,
+        [customer_name, phone_number]
+      );
+      customer_id = newCustomer.rows[0].id;
+    } else {
+      customer_id = customer.rows[0].id;
+    }
+
+
+    // 2. VEHICLE
+    let vehicle = await pool.query(
+      `SELECT id FROM Vehicles WHERE vehicle_number = $1`,
+      [vehicle_number]
+    );
+
+
+    let vehicle_id;
+
+
+    if (vehicle.rows.length === 0) {
+      const newVehicle = await pool.query(
+        `INSERT INTO Vehicles(customer_id, vehicle_number, bike_model)
+         VALUES ($1,$2,$3)
+         RETURNING id`,
+        [customer_id, vehicle_number, bike_model]
+      );
+      vehicle_id = newVehicle.rows[0].id;
+    } else {
+      vehicle_id = vehicle.rows[0].id;
+    }
+
+
+    // 3. SERVICE DATES
+    const today = new Date();
     const service_date = today.toISOString().split("T")[0];
+
 
     const next = new Date();
     next.setMonth(today.getMonth() + 3);
-
     const next_service_date = next.toISOString().split("T")[0];
 
-    // 1. INSERT SERVICE
+
     const serviceResult = await pool.query(
-      `
-      INSERT INTO Service (
-        vehicle_number,
-        service_date,
-        next_service_date,
-        phone_number,
-        customer_name,
-        bike_model
-      )
-      VALUES ($1,$2,$3,$4,$5,$6)
-      RETURNING id
-      `,
-      [
-        vehicle_number,
-        service_date,
-        next_service_date,
-        phone_number || null,
-        customer_name,
-        bike_model
-      ]
+      `INSERT INTO Services(vehicle_id, service_date, next_service_date)
+       VALUES ($1,$2,$3)
+       RETURNING id`,
+      [vehicle_id, service_date, next_service_date]
     );
+
 
     const service_id = serviceResult.rows[0].id;
 
-    // 2. INSERT ITEMS
-    for (let item of items) {
 
+    // 4. ITEMS
+    for (let item of items) {
       await pool.query(
-        `
-        INSERT INTO ServiceItems (
-          service_id,
-          item_name,
-          amount
-        )
-        VALUES ($1,$2,$3)
-        `,
-        [
-          service_id,
-          item.name,
-          item.amount
-        ]
+        `INSERT INTO ServiceItems(service_id, item_name, amount)
+         VALUES ($1,$2,$3)`,
+        [service_id, item.name, item.amount]
       );
     }
 
+
     res.json({
-      message: "Service + Items saved successfully ✔",
-      service_id,
-      next_service_date
+      message: "Service saved successfully ✔",
+      service_id
     });
+
 
   } catch (err) {
     console.error(err);
-
-    res.status(500).json({
-      error: err.message
-    });
+    res.status(500).json({ error: err.message });
   }
 });
+
+
+
 
 
 
@@ -128,14 +146,15 @@ app.get("/vehicle/:number", async (req, res) => {
   try {
     const number = req.params.number;
 
+
     const result = await pool.query(
       `
       SELECT
         s.id,
-        s.vehicle_number,
-        s.customer_name,
-        s.bike_model,
-        s.phone_number,
+        v.vehicle_number,
+        v.bike_model,
+        c.name AS customer_name,
+        c.phone AS phone_number,
         TO_CHAR(s.service_date, 'DD/MM/YYYY') AS service_date,
         TO_CHAR(s.next_service_date, 'DD/MM/YYYY') AS next_service_date,
         json_agg(
@@ -144,21 +163,30 @@ app.get("/vehicle/:number", async (req, res) => {
             'amount', si.amount
           )
         ) AS items
-      FROM Service s
-      LEFT JOIN ServiceItems si ON s.id = si.service_id
-      WHERE UPPER(s.vehicle_number) = UPPER($1)
-      GROUP BY s.id
+      FROM Services s
+      JOIN Vehicles v ON v.id = s.vehicle_id
+      JOIN Customers c ON c.id = v.customer_id
+      LEFT JOIN ServiceItems si ON si.service_id = s.id
+      WHERE UPPER(v.vehicle_number) = UPPER($1)
+      GROUP BY s.id, v.vehicle_number, v.bike_model, c.name, c.phone
       ORDER BY s.id DESC
       `,
       [number]
     );
 
+
     res.json(result.rows);
+
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message });
   }
 });
+
+
+
+
 
 
 
