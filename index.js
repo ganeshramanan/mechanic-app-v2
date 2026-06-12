@@ -292,24 +292,29 @@ app.get("/whatsapp-reminders", async (req, res) => {
         phone_number,
         next_service_date,
         TO_CHAR(next_service_date, 'DD/MM/YYYY') AS next_service_date_formatted,
+
         CASE
           WHEN next_service_date < CURRENT_DATE THEN 'OVERDUE'
           WHEN next_service_date <= CURRENT_DATE + INTERVAL '7 days' THEN 'DUE_SOON'
           ELSE 'OK'
         END AS status
-      FROM services
+
+      FROM service
       WHERE phone_number IS NOT NULL
         AND TRIM(phone_number) <> ''
+        AND next_service_date IS NOT NULL
       ORDER BY next_service_date ASC
     `);
 
-    const reminders = result.rows.map((row) => {
+    const rows = result.rows || [];
+
+    const reminders = rows.map((row) => {
       const message =
 `Dear Customer,
 
 Your vehicle ${row.vehicle_number} is due for service on ${row.next_service_date_formatted}.
 
-Please contact us to schedule your service.
+Please contact us to schedule your next service.
 
 Thanks,
 VT Motors`;
@@ -319,17 +324,24 @@ VT Motors`;
         vehicle_number: row.vehicle_number,
         phone_number: row.phone_number,
         next_service_date: row.next_service_date_formatted,
-        status: row.status,   // 👈 IMPORTANT (use DB status)
+        status: row.status,
         whatsapp_url: `https://wa.me/91${row.phone_number}?text=${encodeURIComponent(message)}`
       };
     });
 
     res.json(reminders);
+
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: err.message });
+    console.error("whatsapp-reminders error:", err);
+
+    res.status(500).json({
+      error: err.message,
+      reminders: []   // ✅ IMPORTANT: prevents frontend crash
+    });
   }
 });
+
+
 
 
 
