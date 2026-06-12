@@ -502,35 +502,69 @@ app.get("/bill/:id/pdf", async (req, res) => {
 /* ---------------- BILL API ---------------- */
 
 app.get("/bill/:id", async (req, res) => {
-  try {
-    const id = req.params.id;
+  const serviceId = req.params.id;
 
-    const result = await pool.query(
+  try {
+    // 1. Get service header
+    const serviceResult = await pool.query(
       `
       SELECT
-        s.vehicle_number,
-        s.phone_number,
-        json_agg(
-          json_build_object(
-            'name', si.item_name,
-            'amount', si.amount
-          )
-        ) AS items,
-        COALESCE(SUM(si.amount),0) AS total
-      FROM Service s
-      LEFT JOIN ServiceItems si ON s.id = si.service_id
-      WHERE s.id = $1
-      GROUP BY s.id
+        id,
+        vehicle_number,
+        phone_number,
+        service_date,
+        next_service_date,
+        invoice_number
+      FROM Service
+      WHERE id = $1
       `,
-      [id]
+      [serviceId]
     );
 
-    res.json(result.rows[0]);
+    if (serviceResult.rows.length === 0) {
+      return res.status(404).json({ error: "Service not found" });
+    }
+
+    const service = serviceResult.rows[0];
+
+    // 2. Get service items
+    const itemsResult = await pool.query(
+      `
+      SELECT
+        item_name AS name,
+        amount
+      FROM ServiceItems
+      WHERE service_id = $1
+      `,
+      [serviceId]
+    );
+
+    const items = itemsResult.rows;
+
+    // 3. Calculate total
+    let total = 0;
+    items.forEach((i) => {
+      total += Number(i.amount);
+    });
+
+    // 4. Response
+    res.json({
+      id: service.id,
+      vehicle_number: service.vehicle_number,
+      phone_number: service.phone_number,
+      invoice_number: service.invoice_number,
+      service_date: service.service_date,
+      next_service_date: service.next_service_date,
+      items: items,
+      total: total,
+    });
   } catch (err) {
-    console.error(err);
+    console.error("Bill API error:", err);
     res.status(500).json({ error: err.message });
   }
 });
+
+
 
 
 
