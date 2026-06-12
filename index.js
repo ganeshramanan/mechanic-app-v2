@@ -542,24 +542,24 @@ app.get("/bill/:id/pdf", async (req, res) => {
 /* ---------------- BILL API ---------------- */
 
 app.get("/bill/:id", async (req, res) => {
-  const serviceId = req.params.id;
+  const id = req.params.id;
 
   try {
-    // 1. Get service header
     const serviceResult = await pool.query(
       `
-      SELECT
-        id,
-        vehicle_number,
-        customer_name,
-        bike_model,
-        phone_number,
-        service_date,
-        next_service_date
-      FROM Service
-      WHERE id = $1
+      SELECT 
+        s.id,
+        c.name AS customer_name,
+        c.phone AS phone_number,
+        v.vehicle_number,
+        v.bike_model,
+        TO_CHAR(s.service_date, 'DD/MM/YYYY') AS service_date
+      FROM services s
+      JOIN customers c ON s.customer_id = c.id
+      JOIN vehicles v ON s.vehicle_id = v.id
+      WHERE s.id = $1
       `,
-      [serviceId]
+      [id]
     );
 
     if (serviceResult.rows.length === 0) {
@@ -568,55 +568,30 @@ app.get("/bill/:id", async (req, res) => {
 
     const service = serviceResult.rows[0];
 
-    // 2. Get service items
     const itemsResult = await pool.query(
       `
-      SELECT
-        item_name AS name,
-        amount
-      FROM ServiceItems
+      SELECT item_name AS name, amount
+      FROM service_items
       WHERE service_id = $1
       `,
-      [serviceId]
+      [id]
     );
 
     const items = itemsResult.rows;
 
-    // 3. Calculate total
-    let total = 0;
-    items.forEach((i) => {
-      total += Number(i.amount);
+    let total = items.reduce((sum, i) => sum + Number(i.amount), 0);
+
+    res.json({
+      ...service,
+      items,
+      total,
     });
 
-    // 4. Response
-    res.json({
-      id: service.id,
-      vehicle_number: service.vehicle_number,
-      customer_name: service.customer_name,
-      bike_model: service.bike_model,
-      phone_number: service.phone_number,
-      invoice_number: service.invoice_number,
-      service_date: service.service_date,
-      next_service_date: service.next_service_date,
-      items: items,
-      total: total,
-    });
   } catch (err) {
     console.error("Bill API error:", err);
     res.status(500).json({ error: err.message });
   }
 });
-
-
-
-
-
-
-
-
-
-
-
 
 
 
