@@ -375,6 +375,8 @@ app.get("/bill/:id/pdf", async (req, res) => {
       SELECT
         id,
         vehicle_number,
+        customer_name,
+        bike_model,
         phone_number,
         TO_CHAR(service_date, 'DD/MM/YYYY') AS service_date
       FROM Service
@@ -519,6 +521,8 @@ app.get("/bill/:id", async (req, res) => {
       SELECT
         id,
         vehicle_number,
+        customer_name,
+        bike_model,
         phone_number,
         service_date,
         next_service_date
