@@ -215,17 +215,71 @@ useEffect(() => {
 
         {/* Navigation */}
         <nav className="flex-1 space-y-1 px-3 py-6">
-          <NavItem icon={Home} label="Dashboard" active />
-          <NavItem icon={Wrench} label="Services" />
-          <NavItem icon={Bike} label="Vehicles" />
-          <NavItem icon={Users} label="Customers" onClick={() => {
-            setCurrentPage("customers");
-            setSidebarOpen(false);
-          }}
-          <NavItem icon={CalendarClock} label="Due Services" />
-          <NavItem icon={MessageCircle} label="WhatsApp" />
-          <NavItem icon={CircleDollarSign} label="Bills" />
-          
+         <NavItem
+  icon={Home}
+  label="Dashboard"
+  active={currentPage === "dashboard"}
+  onClick={() => {
+    setCurrentPage("dashboard");
+    setSidebarOpen(false);
+  }}
+/>
+
+<NavItem
+  icon={Wrench}
+  label="Services"
+  onClick={() => {
+    setCurrentPage("services");
+    setSidebarOpen(false);
+  }}
+/>
+
+<NavItem
+  icon={Bike}
+  label="Vehicles"
+  onClick={() => {
+    setCurrentPage("vehicles");
+    setSidebarOpen(false);
+  }}
+/>
+
+<NavItem
+  icon={Users}
+  label="Customers"
+  onClick={() => {
+    setCurrentPage("customers");
+    setSidebarOpen(false);
+  }}
+/>
+
+<NavItem
+  icon={CalendarClock}
+  label="Due Services"
+  onClick={() => {
+    setCurrentPage("due-services");
+    setSidebarOpen(false);
+  }}
+/>
+
+<NavItem
+  icon={MessageCircle}
+  label="WhatsApp"
+  onClick={() => {
+    setCurrentPage("whatsapp");
+    setSidebarOpen(false);
+  }}
+/>
+
+<NavItem
+  icon={CircleDollarSign}
+  label="Bills"
+  onClick={() => {
+    setCurrentPage("bills");
+    setSidebarOpen(false);
+  }}
+/>
+
+ 
 />
 
 
@@ -694,9 +748,10 @@ useEffect(() => {
   );
 }
 
-function NavItem({ icon: Icon, label, active }) {
+function NavItem({ icon: Icon, label, active, onClick }) {
   return (
     <button
+      onClick={onClick}
       className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition ${
         active
           ? "bg-orange-500 text-white shadow-lg shadow-orange-500/10"
@@ -708,6 +763,8 @@ function NavItem({ icon: Icon, label, active }) {
     </button>
   );
 }
+
+
 
 function StatCard({ title, value, change, icon: Icon }) {
   return (
