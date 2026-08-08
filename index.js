@@ -598,6 +598,36 @@ app.get("/dashboard-stats", async (req, res) => {
   }
 });
 
+/* ---------------- CUSTOMERS ---------------- */
+
+app.get("/customers", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT
+        c.id,
+        c.name,
+        c.phone,
+        COUNT(DISTINCT v.id) AS vehicle_count,
+        COUNT(DISTINCT s.id) AS service_count
+      FROM customers c
+      LEFT JOIN vehicles v
+        ON v.customer_id = c.id
+      LEFT JOIN services s
+        ON s.vehicle_id = v.id
+      GROUP BY c.id, c.name, c.phone
+      ORDER BY c.id DESC
+    `);
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Customers error:", err);
+
+    res.status(500).json({
+      error: err.message,
+    });
+  }
+});
+
 
 
 
