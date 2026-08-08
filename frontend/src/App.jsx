@@ -329,16 +329,6 @@ function App() {
             </div>
 
             <div className="flex items-center gap-2 sm:gap-4">
-              <button className="hidden rounded-xl border border-slate-200 bg-white p-2.5 text-slate-600 shadow-sm hover:bg-slate-50 sm:block">
-                <Search size={20} />
-              </button>
-
-              <button className="relative rounded-xl border border-slate-200 bg-white p-2.5 text-slate-600 shadow-sm hover:bg-slate-50">
-                <Bell size={20} />
-
-                <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-orange-500 ring-2 ring-white" />
-              </button>
-
               <div className="hidden h-10 w-px bg-slate-200 sm:block" />
 
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-100 text-sm font-bold text-orange-600">
