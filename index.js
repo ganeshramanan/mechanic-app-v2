@@ -628,6 +628,62 @@ app.get("/customers", async (req, res) => {
   }
 });
 
+app.get("/customer/:id", async (req, res) => {
+  try {
+    const id = req.params.id;
+
+    const customerResult = await pool.query(
+      `
+      SELECT
+        id,
+        name,
+        phone
+      FROM customers
+      WHERE id = $1
+      `,
+      [id]
+    );
+
+    if (customerResult.rows.length === 0) {
+      return res.status(404).json({
+        error: "Customer not found",
+      });
+    }
+
+    const vehiclesResult = await pool.query(
+      `
+      SELECT
+        v.id,
+        v.vehicle_number,
+        v.bike_model,
+        COUNT(s.id) AS service_count,
+        MAX(s.service_date) AS last_service_date
+      FROM vehicles v
+      LEFT JOIN services s
+        ON s.vehicle_id = v.id
+      WHERE v.customer_id = $1
+      GROUP BY
+        v.id,
+        v.vehicle_number,
+        v.bike_model
+      ORDER BY v.id DESC
+      `,
+      [id]
+    );
+
+    res.json({
+      customer: customerResult.rows[0],
+      vehicles: vehiclesResult.rows,
+    });
+  } catch (err) {
+    console.error("Customer details error:", err);
+
+    res.status(500).json({
+      error: err.message,
+    });
+  }
+});
+
 
 
 
