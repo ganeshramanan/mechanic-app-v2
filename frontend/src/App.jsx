@@ -18,7 +18,6 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import NewService from "./pages/NewService";
-import { API_BASE_URL } from "./api";
 import { getDueServices } from "./api";
 
 const stats = [
@@ -82,30 +81,6 @@ const recentServices = [
     date: "Yesterday, 03:15 PM",
   },
 ];
-
-const [upcomingServices, setUpcomingServices] = useState([]);
-const [loadingDueServices, setLoadingDueServices] = useState(true);
-const [dueServicesError, setDueServicesError] = useState("");
-
-useEffect(() => {
-  async function loadDueServices() {
-    try {
-      setLoadingDueServices(true);
-
-      const data = await getDueServices();
-
-      setUpcomingServices(data);
-    } catch (error) {
-      console.error("Failed to load due services:", error);
-      setDueServicesError(error.message);
-    } finally {
-      setLoadingDueServices(false);
-    }
-  }
-
-  loadDueServices();
-}, []);
-
 
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
