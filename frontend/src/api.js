@@ -58,6 +58,21 @@ export async function getRecentServices() {
   return response.json();
 }
 
+/* --- Get vehicle history --- */
+export async function getVehicleHistory(vehicleNumber) {
+  const response = await fetch(
+    `${API_BASE_URL}/vehicle/${encodeURIComponent(vehicleNumber)}`
+  );
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || "Failed to load vehicle history");
+  }
+
+  return response.json();
+}
+
+
 /* ---------------- DUE SERVICES ---------------- */
 
 export async function getDueServices() {
