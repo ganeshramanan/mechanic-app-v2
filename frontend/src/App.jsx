@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import NewService from "./pages/NewService";
-import { getDueServices } from "./api";
+import { getDueServices, getRecentServices } from "./api";
 
 const stats = [
   {
