@@ -19,6 +19,7 @@ import {
 
 import { useEffect, useState } from "react";
 import NewService from "./pages/NewService";
+import VehicleHistory from "./pages/VehicleHistory";
 import { getDashboardStats, getDueServices, getRecentServices } from "./api";
 
 const defaultStats = {
@@ -143,6 +144,17 @@ useEffect(() => {
       />
     );
   }
+
+  // Vehicle history
+  if (currentPage === "vehicle-history") {
+  return (
+    <VehicleHistory
+      onBack={() => setCurrentPage("dashboard")}
+    />
+  );
+}
+
+
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
@@ -639,6 +651,7 @@ useEffect(() => {
                 icon={Search}
                 title="Find Vehicle"
                 description="Search service history"
+                onClick={() => setCurrentPage("vehicle-history")}
               />
 
               <QuickAction
