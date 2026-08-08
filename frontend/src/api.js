@@ -95,6 +95,19 @@ export async function getCustomer(id) {
   return response.json();
 }
 
+/* --- Vehicle data --- */
+
+export async function getVehicles() {
+  const response = await fetch(`${API_BASE_URL}/vehicles`);
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || "Failed to load vehicles");
+  }
+
+  return response.json();
+}
+
 
 
 /* ---------------- DUE SERVICES ---------------- */
