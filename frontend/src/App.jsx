@@ -218,17 +218,14 @@ useEffect(() => {
           <NavItem icon={Home} label="Dashboard" active />
           <NavItem icon={Wrench} label="Services" />
           <NavItem icon={Bike} label="Vehicles" />
-          <NavItem icon={Users} label="Customers" />
+          <NavItem icon={Users} label="Customers" onClick={() => {
+            setCurrentPage("customers");
+            setSidebarOpen(false);
+          }}
           <NavItem icon={CalendarClock} label="Due Services" />
           <NavItem icon={MessageCircle} label="WhatsApp" />
           <NavItem icon={CircleDollarSign} label="Bills" />
-          <NavItem
-  icon={Users}
-  label="Customers"
-  onClick={() => {
-    setCurrentPage("customers");
-    setSidebarOpen(false);
-  }}
+          
 />
 
 
