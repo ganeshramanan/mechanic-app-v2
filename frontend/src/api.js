@@ -108,6 +108,19 @@ export async function getVehicles() {
   return response.json();
 }
 
+/* ---------------- GET SERVICES ---------------- */
+export async function getServices() {
+  const response = await fetch(`${API_BASE_URL}/services`);
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || "Failed to load services");
+  }
+
+  return response.json();
+}
+
+
 
 
 /* ---------------- DUE SERVICES ---------------- */
