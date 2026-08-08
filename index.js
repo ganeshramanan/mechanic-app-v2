@@ -504,6 +504,49 @@ app.get("/bill/:id/pdf", async (req, res) => {
     res.status(500).send(err.message);
   }
 });
+/* ---------------- RECENT SERVICES ---------------- */
+
+app.get("/recent-services", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT
+        s.id,
+        v.vehicle_number,
+        v.bike_model,
+        c.name AS customer_name,
+        TO_CHAR(s.service_date, 'DD/MM/YYYY') AS service_date,
+        COALESCE(
+          SUM(si.amount),
+          0
+        ) AS total_amount
+      FROM services s
+      JOIN vehicles v
+        ON s.vehicle_id = v.id
+      JOIN customers c
+        ON v.customer_id = c.id
+      LEFT JOIN service_items si
+        ON si.service_id = s.id
+      GROUP BY
+        s.id,
+        v.vehicle_number,
+        v.bike_model,
+        c.name,
+        s.service_date
+      ORDER BY s.service_date DESC, s.id DESC
+      LIMIT 5
+    `);
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Recent services error:", err);
+
+    res.status(500).json({
+      error: err.message,
+    });
+  }
+});
+
+
 
 /* ---------------- 404 ---------------- */
 
