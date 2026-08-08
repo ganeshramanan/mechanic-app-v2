@@ -546,6 +546,60 @@ app.get("/recent-services", async (req, res) => {
   }
 });
 
+/* ---------------- DASHBOARD STATS ---------------- */
+
+app.get("/dashboard-stats", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT
+        (
+          SELECT COUNT(*)
+          FROM vehicles
+        ) AS total_vehicles,
+
+        (
+          SELECT COUNT(*)
+          FROM services
+          WHERE service_date = CURRENT_DATE
+        ) AS services_today,
+
+        (
+          SELECT COUNT(*)
+          FROM services
+          WHERE next_service_date >= CURRENT_DATE
+            AND next_service_date <= CURRENT_DATE + INTERVAL '7 days'
+        ) AS due_soon,
+
+        (
+          SELECT COALESCE(SUM(si.amount), 0)
+          FROM service_items si
+          JOIN services s
+            ON s.id = si.service_id
+          WHERE DATE_TRUNC('month', s.service_date)
+                = DATE_TRUNC('month', CURRENT_DATE)
+        ) AS revenue;
+
+    `);
+
+    const stats = result.rows[0];
+
+    res.json({
+      total_vehicles: Number(stats.total_vehicles),
+      services_today: Number(stats.services_today),
+      due_soon: Number(stats.due_soon),
+      revenue: Number(stats.revenue),
+    });
+  } catch (err) {
+    console.error("Dashboard stats error:", err);
+
+    res.status(500).json({
+      error: err.message,
+    });
+  }
+});
+
+
+
 
 
 /* ---------------- 404 ---------------- */
