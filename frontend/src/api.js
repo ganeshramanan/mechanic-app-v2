@@ -8,6 +8,16 @@ export async function createService(serviceData) {
     },
     body: JSON.stringify(serviceData),
   });
+export async function getRecentServices() {
+  const response = await fetch(`${API_BASE_URL}/recent-services`);
+
+  if (!response.ok) {
+    throw new Error("Failed to load recent services");
+  }
+
+  return response.json();
+}
+
 
   if (!response.ok) {
     const error = await response.json();
