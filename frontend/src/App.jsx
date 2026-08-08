@@ -19,38 +19,24 @@ import {
 
 import { useEffect, useState } from "react";
 import NewService from "./pages/NewService";
-import { getDueServices, getRecentServices } from "./api";
+import { getDashboardStats, getDueServices, getRecentServices } from "./api";
 
-const stats = [
-  {
-    title: "Total Vehicles",
-    value: "248",
-    change: "+12 this month",
-    icon: Bike,
-  },
-  {
-    title: "Services Today",
-    value: "18",
-    change: "+4 from yesterday",
-    icon: Wrench,
-  },
-  {
-    title: "Due Soon",
-    value: "7",
-    change: "Next 7 days",
-    icon: CalendarClock,
-  },
-  {
-    title: "Revenue",
-    value: "₹24,850",
-    change: "This month",
-    icon: CircleDollarSign,
-  },
-];
+const defaultStats = {
+  total_vehicles: 0,
+  services_today: 0,
+  due_soon: 0,
+  revenue: 0,
+};
+
 
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState("dashboard");
+
+  // Dashboard Services
+  const [dashboardStats, setDashboardStats] = useState(defaultStats);
+  const [loadingStats, setLoadingStats] = useState(true);
+  const [statsError, setStatsError] = useState("");
 
   // Recent Services
   const [recentServices, setRecentServices] = useState([]);
@@ -86,6 +72,39 @@ function App() {
 
     loadRecentServices();
   }, []);
+
+  
+
+
+// Dashboard stats
+useEffect(() => {
+  async function loadDashboardStats() {
+    try {
+      setLoadingStats(true);
+      setStatsError("");
+
+      const data = await getDashboardStats();
+
+      console.log("Dashboard stats API response:", data);
+
+      setDashboardStats(data);
+    } catch (error) {
+      console.error(
+        "Failed to load dashboard stats:",
+        error
+      );
+
+      setStatsError(
+        error.message || "Failed to load dashboard stats"
+      );
+    } finally {
+      setLoadingStats(false);
+    }
+  }
+
+  loadDashboardStats();
+}, []);
+
 
   // Load Upcoming / Due Services
   useEffect(() => {
@@ -280,12 +299,65 @@ function App() {
 
           </div>
 
-          {/* Statistics */}
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            {stats.map((stat) => (
-              <StatCard key={stat.title} {...stat} />
-            ))}
-          </div>
+         {/* Statistics */}
+<div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+
+  <StatCard
+    title="Total Vehicles"
+    value={
+      loadingStats
+        ? "..."
+        : dashboardStats.total_vehicles
+    }
+    change="Registered vehicles"
+    icon={Bike}
+  />
+
+  <StatCard
+    title="Services Today"
+    value={
+      loadingStats
+        ? "..."
+        : dashboardStats.services_today
+    }
+    change="Today's services"
+    icon={Wrench}
+  />
+
+  <StatCard
+    title="Due Soon"
+    value={
+      loadingStats
+        ? "..."
+        : dashboardStats.due_soon
+    }
+    change="Next 7 days"
+    icon={CalendarClock}
+  />
+
+  <StatCard
+    title="Revenue"
+    value={
+      loadingStats
+        ? "..."
+        : `₹${Number(
+            dashboardStats.revenue || 0
+          ).toLocaleString("en-IN")}`
+    }
+    change="This month"
+    icon={CircleDollarSign}
+  />
+
+</div>
+
+{statsError && (
+  <p className="mt-2 text-xs text-red-500">
+    Unable to load dashboard statistics: {statsError}
+  </p>
+)}
+
+
+
 
           {/* Main grid */}
           <div className="mt-6 grid gap-6 xl:grid-cols-3">
