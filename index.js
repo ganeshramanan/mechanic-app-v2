@@ -291,7 +291,7 @@ app.get("/whatsapp-reminders", async (req, res) => {
         v.vehicle_number,
         v.bike_model,
         c.phone AS phone_number,
-        s.next_service_date,
+        TO_CHAR(s.next_service_date, 'DD/MM/YYYY') AS next_service.date,
         CASE
           WHEN s.next_service_date < CURRENT_DATE
             THEN 'OVERDUE'
