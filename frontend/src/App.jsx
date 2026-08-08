@@ -85,33 +85,39 @@ const recentServices = [
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState("dashboard");
+
   const [upcomingServices, setUpcomingServices] = useState([]);
-const [loadingDueServices, setLoadingDueServices] = useState(true);
-const [dueServicesError, setDueServicesError] = useState("");
+  const [loadingDueServices, setLoadingDueServices] = useState(true);
+  const [dueServicesError, setDueServicesError] = useState("");
 
-useEffect(() => {
-  async function loadDueServices() {
-    try {
-      const data = await getDueServices();
-      setUpcomingServices(data);
-    } catch (error) {
-      console.error("Failed to load due services:", error);
-      setDueServicesError(error.message);
-    } finally {
-      setLoadingDueServices(false);
+  useEffect(() => {
+    async function loadDueServices() {
+      try {
+        setLoadingDueServices(true);
+        setDueServicesError("");
+
+        const data = await getDueServices();
+
+        console.log("Due services API response:", data);
+
+        setUpcomingServices(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error("Failed to load due services:", error);
+        setDueServicesError(error.message || "Failed to load services");
+      } finally {
+        setLoadingDueServices(false);
+      }
     }
-  }
 
-  loadDueServices();
-}, []);
-
+    loadDueServices();
+  }, []);
 
   if (currentPage === "new-service") {
     return (
       <NewService
         onBack={() => setCurrentPage("dashboard")}
         onSaved={() => {
-          // We will refresh dashboard data later
+          setCurrentPage("dashboard");
         }}
       />
     );
@@ -145,7 +151,9 @@ useEffect(() => {
 
             <div>
               <h1 className="text-lg font-bold tracking-wide">VT MOTORS</h1>
-              <p className="text-xs text-slate-400">Service Management</p>
+              <p className="text-xs text-slate-400">
+                Service Management
+              </p>
             </div>
           </div>
 
@@ -179,7 +187,9 @@ useEffect(() => {
               </div>
 
               <div className="min-w-0">
-                <p className="truncate text-sm font-semibold">VT Motors</p>
+                <p className="truncate text-sm font-semibold">
+                  VT Motors
+                </p>
                 <p className="truncate text-xs text-slate-400">
                   Workshop Admin
                 </p>
@@ -203,7 +213,9 @@ useEffect(() => {
               </button>
 
               <div>
-                <p className="text-sm text-slate-500">Saturday, August 8</p>
+                <p className="text-sm text-slate-500">
+                  Saturday, August 8
+                </p>
                 <h2 className="text-lg font-bold sm:text-xl">
                   Good morning 👋
                 </h2>
@@ -267,6 +279,7 @@ useEffect(() => {
               <div className="flex items-center justify-between border-b border-slate-100 px-5 py-5 sm:px-6">
                 <div>
                   <h3 className="font-bold">Recent Services</h3>
+
                   <p className="mt-1 text-xs text-slate-500">
                     Latest work completed at your workshop
                   </p>
@@ -290,7 +303,9 @@ useEffect(() => {
                       </div>
 
                       <div>
-                        <p className="font-semibold">{service.vehicle}</p>
+                        <p className="font-semibold">
+                          {service.vehicle}
+                        </p>
 
                         <p className="mt-0.5 text-sm text-slate-500">
                           {service.bike} • {service.customer}
@@ -320,6 +335,7 @@ useEffect(() => {
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="font-bold">Upcoming Services</h3>
+
                     <p className="mt-1 text-xs text-slate-500">
                       Customers to follow up
                     </p>
@@ -331,43 +347,101 @@ useEffect(() => {
                 </div>
               </div>
 
-              <div className="divide-y divide-slate-100">
-                {upcomingServices.map((service) => (
-                  <div key={service.vehicle} className="px-5 py-4">
-                    <div className="flex items-start gap-3">
-                      <div
-                        className={`mt-1 h-2.5 w-2.5 rounded-full ${
-                          service.status === "due"
-                            ? "bg-red-500"
-                            : "bg-orange-400"
-                        }`}
-                      />
+              {/* Loading */}
+              {loadingDueServices && (
+                <div className="px-5 py-8 text-center text-sm text-slate-500">
+                  Loading services...
+                </div>
+              )}
 
-                      <div className="min-w-0 flex-1">
-                        <p className="font-semibold">{service.vehicle}</p>
+              {/* Error */}
+              {!loadingDueServices && dueServicesError && (
+                <div className="px-5 py-8 text-center">
+                  <p className="text-sm font-medium text-red-500">
+                    Unable to load services
+                  </p>
 
-                        <p className="mt-0.5 truncate text-sm text-slate-500">
-                          {service.bike} • {service.customer}
-                        </p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    {dueServicesError}
+                  </p>
+                </div>
+              )}
 
-                        <p
-                          className={`mt-2 text-xs font-semibold ${
-                            service.status === "due"
-                              ? "text-red-500"
-                              : "text-orange-500"
-                          }`}
-                        >
-                          {service.due}
-                        </p>
-                      </div>
-
-                      <button className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700">
-                        <ChevronRight size={18} />
-                      </button>
-                    </div>
+              {/* Empty */}
+              {!loadingDueServices &&
+                !dueServicesError &&
+                upcomingServices.length === 0 && (
+                  <div className="px-5 py-8 text-center text-sm text-slate-500">
+                    No upcoming services found.
                   </div>
-                ))}
-              </div>
+                )}
+
+              {/* Real API data */}
+              {!loadingDueServices &&
+                !dueServicesError &&
+                upcomingServices.length > 0 && (
+                  <div className="divide-y divide-slate-100">
+                    {upcomingServices.map((service) => {
+                      const isOverdue =
+                        service.status?.toUpperCase() === "OVERDUE";
+
+                      return (
+                        <div
+                          key={service.id}
+                          className="px-5 py-4"
+                        >
+                          <div className="flex items-start gap-3">
+                            {/* Status dot */}
+                            <div
+                              className={`mt-1 h-2.5 w-2.5 shrink-0 rounded-full ${
+                                isOverdue
+                                  ? "bg-red-500"
+                                  : "bg-orange-400"
+                              }`}
+                            />
+
+                            <div className="min-w-0 flex-1">
+                              {/* Vehicle */}
+                              <p className="font-semibold">
+                                {service.vehicle_number}
+                              </p>
+
+                              {/* Bike + customer */}
+                              <p className="mt-0.5 truncate text-sm text-slate-500">
+                                {service.bike_model || "Bike model not available"}{" "}
+                                • {service.customer_name}
+                              </p>
+
+                              {/* Next service date */}
+                              <p
+                                className={`mt-2 text-xs font-semibold ${
+                                  isOverdue
+                                    ? "text-red-500"
+                                    : "text-orange-500"
+                                }`}
+                              >
+                                {isOverdue
+                                  ? `Overdue • ${service.next_service_date}`
+                                  : `Next service • ${service.next_service_date}`}
+                              </p>
+                            </div>
+
+                            {/* Status */}
+                            <span
+                              className={`shrink-0 rounded-full px-2 py-1 text-[10px] font-semibold ${
+                                isOverdue
+                                  ? "bg-red-50 text-red-600"
+                                  : "bg-emerald-50 text-emerald-600"
+                              }`}
+                            >
+                              {service.status}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
 
               <div className="border-t border-slate-100 p-4">
                 <button className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-100 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-200">
@@ -387,6 +461,7 @@ useEffect(() => {
                 icon={Plus}
                 title="New Service"
                 description="Create service record"
+                onClick={() => setCurrentPage("new-service")}
               />
 
               <QuickAction
@@ -434,9 +509,13 @@ function StatCard({ title, value, change, icon: Icon }) {
     <div className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-sm font-medium text-slate-500">{title}</p>
+          <p className="text-sm font-medium text-slate-500">
+            {title}
+          </p>
 
-          <p className="mt-2 text-2xl font-bold tracking-tight">{value}</p>
+          <p className="mt-2 text-2xl font-bold tracking-tight">
+            {value}
+          </p>
         </div>
 
         <div className="rounded-xl bg-orange-50 p-3 text-orange-500 transition group-hover:bg-orange-500 group-hover:text-white">
@@ -444,24 +523,39 @@ function StatCard({ title, value, change, icon: Icon }) {
         </div>
       </div>
 
-      <p className="mt-4 text-xs font-medium text-emerald-600">{change}</p>
+      <p className="mt-4 text-xs font-medium text-emerald-600">
+        {change}
+      </p>
     </div>
   );
 }
 
-function QuickAction({ icon: Icon, title, description }) {
+function QuickAction({
+  icon: Icon,
+  title,
+  description,
+  onClick,
+}) {
   return (
-    <button className="group flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-orange-200 hover:shadow-md">
+    <button
+      onClick={onClick}
+      className="group flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-orange-200 hover:shadow-md"
+    >
       <div className="rounded-xl bg-slate-100 p-3 text-slate-600 transition group-hover:bg-orange-500 group-hover:text-white">
         <Icon size={20} />
       </div>
 
       <div>
         <p className="font-semibold">{title}</p>
-        <p className="mt-0.5 text-xs text-slate-500">{description}</p>
+
+        <p className="mt-0.5 text-xs text-slate-500">
+          {description}
+        </p>
       </div>
     </button>
   );
 }
 
 export default App;
+
+
