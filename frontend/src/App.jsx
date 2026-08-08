@@ -23,6 +23,7 @@ import VehicleHistory from "./pages/VehicleHistory";
 import Customers from "./pages/Customers";
 import Vehicles from "./pages/Vehicles";
 import Services from "./pages/Services";
+import WhatsApp from "./pages/WhatsApp";
 import { getDashboardStats, getDueServices, getRecentServices } from "./api";
 
 const defaultStats = {
@@ -185,7 +186,10 @@ if (currentPage === "services") {
   );
 }
 
-
+ //Whatsapp
+  if (currentPage === "whatsapp") {
+    return <WhatsApp onBack={() => setCurrentPage("dashboard")} />;
+  }
 
 
   return (
