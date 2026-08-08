@@ -16,3 +16,16 @@ export async function createService(serviceData) {
 
   return response.json();
 }
+
+export async function getDueServices() {
+  const response = await fetch(`${API_BASE_URL}/due-services`);
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || "Failed to load due services");
+  }
+
+  return response.json();
+}
+
+
