@@ -22,6 +22,7 @@ import NewService from "./pages/NewService";
 import VehicleHistory from "./pages/VehicleHistory";
 import Customers from "./pages/Customers";
 import Vehicles from "./pages/Vehicles";
+import Services from "./pages/Services";
 import { getDashboardStats, getDueServices, getRecentServices } from "./api";
 
 const defaultStats = {
@@ -143,7 +144,16 @@ if (currentPage === "vehicles") {
   );
 }
 
-
+if (currentPage === "services") {
+    return (
+      <Services
+        onBack={() => setCurrentPage("dashboard")}
+        onSaved={() => {
+          setCurrentPage("dashboard");
+        }}
+      />
+    );
+  }
   
   // New Service page
   if (currentPage === "new-service") {
