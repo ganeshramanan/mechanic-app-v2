@@ -10,6 +10,7 @@ import {
   Wrench,
 } from "lucide-react";
 import { getServices } from "../api";
+import Bill from "./Bill";
 
 function Services({ onBack }) {
   const [services, setServices] = useState([]);
@@ -17,6 +18,7 @@ function Services({ onBack }) {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [selectedBillId, setSelectedBillId] = useState(null);
 
   useEffect(() => {
     async function loadServices() {
@@ -60,9 +62,13 @@ function Services({ onBack }) {
   }, [search, services]);
 
   function handleViewBill(serviceId) {
-    const billUrl = `https://mechanic-app-v2.onrender.com/bill/${serviceId}`;
+    setSelectedBillId(serviceId);
+  }
 
-    window.open(billUrl, "_blank");
+  if (selectedBillId) {
+    return (
+      <Bill serviceId={selectedBillId} onBack={() => setSelectedBillId(null)} />
+    );
   }
 
   return (
