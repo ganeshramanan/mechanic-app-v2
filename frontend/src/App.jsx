@@ -21,6 +21,7 @@ import { useEffect, useState } from "react";
 import NewService from "./pages/NewService";
 import VehicleHistory from "./pages/VehicleHistory";
 import Customers from "./pages/Customers";
+import Vehicles from "./pages/Vehicles";
 import { getDashboardStats, getDueServices, getRecentServices } from "./api";
 
 const defaultStats = {
@@ -134,6 +135,16 @@ useEffect(() => {
     loadDueServices();
   }, []);
 
+if (currentPage === "vehicles") {
+  return (
+    <Vehicles
+      onBack={() => setCurrentPage("dashboard")}
+    />
+  );
+}
+
+
+  
   // New Service page
   if (currentPage === "new-service") {
     return (
