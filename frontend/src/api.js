@@ -134,6 +134,19 @@ export async function getWhatsAppReminders() {
   return response.json();
 }
 
+/* ---------------- get bill ---------------- */
+
+export async function getBill(serviceId) {
+  const response = await fetch(
+    `https://mechanic-app-v2.onrender.com/bill/${serviceId}`,
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to load bill");
+  }
+
+  return response.json();
+}
 
 /* ---------------- DUE SERVICES ---------------- */
 
