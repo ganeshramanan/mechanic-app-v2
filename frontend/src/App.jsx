@@ -110,6 +110,26 @@ useEffect(() => {
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState("dashboard");
+  const [upcomingServices, setUpcomingServices] = useState([]);
+const [loadingDueServices, setLoadingDueServices] = useState(true);
+const [dueServicesError, setDueServicesError] = useState("");
+
+useEffect(() => {
+  async function loadDueServices() {
+    try {
+      const data = await getDueServices();
+      setUpcomingServices(data);
+    } catch (error) {
+      console.error("Failed to load due services:", error);
+      setDueServicesError(error.message);
+    } finally {
+      setLoadingDueServices(false);
+    }
+  }
+
+  loadDueServices();
+}, []);
+
 
   if (currentPage === "new-service") {
     return (
