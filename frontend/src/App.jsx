@@ -19,6 +19,7 @@ import {
 import { useEffect, useState } from "react";
 import NewService from "./pages/NewService";
 import { API_BASE_URL } from "./api";
+import { getDueServices } from "./api";
 
 const stats = [
   {
@@ -82,29 +83,29 @@ const recentServices = [
   },
 ];
 
-const upcomingServices = [
-  {
-    vehicle: "TN 09 XY 1122",
-    bike: "Yamaha MT-15",
-    customer: "Rahul",
-    due: "Tomorrow",
-    status: "due",
-  },
-  {
-    vehicle: "TN 10 AB 3344",
-    bike: "Honda Shine",
-    customer: "Karthik",
-    due: "In 3 days",
-    status: "soon",
-  },
-  {
-    vehicle: "TN 12 CD 5566",
-    bike: "Royal Enfield Hunter",
-    customer: "Mohan",
-    due: "In 5 days",
-    status: "soon",
-  },
-];
+const [upcomingServices, setUpcomingServices] = useState([]);
+const [loadingDueServices, setLoadingDueServices] = useState(true);
+const [dueServicesError, setDueServicesError] = useState("");
+
+useEffect(() => {
+  async function loadDueServices() {
+    try {
+      setLoadingDueServices(true);
+
+      const data = await getDueServices();
+
+      setUpcomingServices(data);
+    } catch (error) {
+      console.error("Failed to load due services:", error);
+      setDueServicesError(error.message);
+    } finally {
+      setLoadingDueServices(false);
+    }
+  }
+
+  loadDueServices();
+}, []);
+
 
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
