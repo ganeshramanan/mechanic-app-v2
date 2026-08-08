@@ -24,6 +24,7 @@ import Customers from "./pages/Customers";
 import Vehicles from "./pages/Vehicles";
 import Services from "./pages/Services";
 import WhatsApp from "./pages/WhatsApp";
+import DueServices from "./pages/DueServices";
 import { getDashboardStats, getDueServices, getRecentServices } from "./api";
 
 const defaultStats = {
@@ -191,6 +192,17 @@ if (currentPage === "services") {
     return <WhatsApp onBack={() => setCurrentPage("dashboard")} />;
   }
 
+ // Due servics page
+  if (currentPage === "due-services") {
+    return (
+      <DueServices
+        onBack={() => setCurrentPage("dashboard")}
+        onSaved={() => {
+          setCurrentPage("dashboard");
+        }}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
