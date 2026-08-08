@@ -47,40 +47,7 @@ const stats = [
   },
 ];
 
-const recentServices = [
-  {
-    vehicle: "TN 09 AB 1234",
-    bike: "Yamaha R15",
-    customer: "Arun Kumar",
-    service: "General Service",
-    amount: "₹1,850",
-    date: "Today, 10:32 AM",
-  },
-  {
-    vehicle: "TN 10 CD 5678",
-    bike: "Royal Enfield Classic",
-    customer: "Prakash",
-    service: "Oil Change",
-    amount: "₹950",
-    date: "Today, 09:45 AM",
-  },
-  {
-    vehicle: "TN 11 EF 9012",
-    bike: "Honda Activa",
-    customer: "Suresh",
-    service: "Brake Service",
-    amount: "₹1,250",
-    date: "Yesterday, 05:20 PM",
-  },
-  {
-    vehicle: "TN 12 GH 3456",
-    bike: "TVS Apache",
-    customer: "Vijay",
-    service: "Periodic Service",
-    amount: "₹2,400",
-    date: "Yesterday, 03:15 PM",
-  },
-];
+const [recentServices, setRecentServices] = useState([]);
 
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
