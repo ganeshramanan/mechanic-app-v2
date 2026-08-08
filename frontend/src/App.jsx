@@ -20,6 +20,7 @@ import {
 import { useEffect, useState } from "react";
 import NewService from "./pages/NewService";
 import VehicleHistory from "./pages/VehicleHistory";
+import Customers from "./pages/Customers";
 import { getDashboardStats, getDueServices, getRecentServices } from "./api";
 
 const defaultStats = {
@@ -154,6 +155,16 @@ useEffect(() => {
   );
 }
 
+  //Customers
+  if (currentPage === "customers") {
+  return (
+    <Customers
+      onBack={() => setCurrentPage("dashboard")}
+    />
+  );
+}
+
+
 
 
   return (
@@ -211,6 +222,16 @@ useEffect(() => {
           <NavItem icon={CalendarClock} label="Due Services" />
           <NavItem icon={MessageCircle} label="WhatsApp" />
           <NavItem icon={CircleDollarSign} label="Bills" />
+          <NavItem
+  icon={Users}
+  label="Customers"
+  onClick={() => {
+    setCurrentPage("customers");
+    setSidebarOpen(false);
+  }}
+/>
+
+
         </nav>
 
         {/* Bottom navigation */}
