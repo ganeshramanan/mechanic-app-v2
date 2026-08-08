@@ -16,6 +16,7 @@ import {
   Wrench,
   X,
 } from "lucide-react";
+
 import { useEffect, useState } from "react";
 import NewService from "./pages/NewService";
 import { getDueServices, getRecentServices } from "./api";
@@ -47,15 +48,46 @@ const stats = [
   },
 ];
 
-
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState("dashboard");
+
+  // Recent Services
   const [recentServices, setRecentServices] = useState([]);
+  const [loadingRecentServices, setLoadingRecentServices] = useState(true);
+  const [recentServicesError, setRecentServicesError] = useState("");
+
+  // Upcoming Services
   const [upcomingServices, setUpcomingServices] = useState([]);
   const [loadingDueServices, setLoadingDueServices] = useState(true);
   const [dueServicesError, setDueServicesError] = useState("");
 
+  // Load Recent Services
+  useEffect(() => {
+    async function loadRecentServices() {
+      try {
+        setLoadingRecentServices(true);
+        setRecentServicesError("");
+
+        const data = await getRecentServices();
+
+        console.log("Recent services API response:", data);
+
+        setRecentServices(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error("Failed to load recent services:", error);
+        setRecentServicesError(
+          error.message || "Failed to load recent services"
+        );
+      } finally {
+        setLoadingRecentServices(false);
+      }
+    }
+
+    loadRecentServices();
+  }, []);
+
+  // Load Upcoming / Due Services
   useEffect(() => {
     async function loadDueServices() {
       try {
@@ -69,7 +101,10 @@ function App() {
         setUpcomingServices(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error("Failed to load due services:", error);
-        setDueServicesError(error.message || "Failed to load services");
+
+        setDueServicesError(
+          error.message || "Failed to load services"
+        );
       } finally {
         setLoadingDueServices(false);
       }
@@ -78,6 +113,7 @@ function App() {
     loadDueServices();
   }, []);
 
+  // New Service page
   if (currentPage === "new-service") {
     return (
       <NewService
@@ -91,6 +127,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
+
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div
@@ -116,7 +153,10 @@ function App() {
             </div>
 
             <div>
-              <h1 className="text-lg font-bold tracking-wide">VT MOTORS</h1>
+              <h1 className="text-lg font-bold tracking-wide">
+                VT MOTORS
+              </h1>
+
               <p className="text-xs text-slate-400">
                 Service Management
               </p>
@@ -156,6 +196,7 @@ function App() {
                 <p className="truncate text-sm font-semibold">
                   VT Motors
                 </p>
+
                 <p className="truncate text-xs text-slate-400">
                   Workshop Admin
                 </p>
@@ -167,9 +208,11 @@ function App() {
 
       {/* Main */}
       <main className="lg:pl-64">
+
         {/* Header */}
         <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur">
           <div className="flex h-20 items-center justify-between px-4 sm:px-6 lg:px-8">
+
             <div className="flex items-center gap-3">
               <button
                 className="rounded-xl p-2 hover:bg-slate-100 lg:hidden"
@@ -182,6 +225,7 @@ function App() {
                 <p className="text-sm text-slate-500">
                   Saturday, August 8
                 </p>
+
                 <h2 className="text-lg font-bold sm:text-xl">
                   Good morning 👋
                 </h2>
@@ -189,6 +233,7 @@ function App() {
             </div>
 
             <div className="flex items-center gap-2 sm:gap-4">
+
               <button className="hidden rounded-xl border border-slate-200 bg-white p-2.5 text-slate-600 shadow-sm hover:bg-slate-50 sm:block">
                 <Search size={20} />
               </button>
@@ -204,14 +249,17 @@ function App() {
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-100 text-sm font-bold text-orange-600">
                 VT
               </div>
+
             </div>
           </div>
         </header>
 
         {/* Page content */}
         <div className="p-4 sm:p-6 lg:p-8">
+
           {/* Page title */}
           <div className="mb-7 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+
             <div>
               <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
                 Workshop Overview
@@ -229,6 +277,7 @@ function App() {
               <Plus size={19} />
               New Service
             </button>
+
           </div>
 
           {/* Statistics */}
@@ -240,11 +289,16 @@ function App() {
 
           {/* Main grid */}
           <div className="mt-6 grid gap-6 xl:grid-cols-3">
-            {/* Recent services */}
+
+            {/* ================= RECENT SERVICES ================= */}
             <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm xl:col-span-2">
+
               <div className="flex items-center justify-between border-b border-slate-100 px-5 py-5 sm:px-6">
+
                 <div>
-                  <h3 className="font-bold">Recent Services</h3>
+                  <h3 className="font-bold">
+                    Recent Services
+                  </h3>
 
                   <p className="mt-1 text-xs text-slate-500">
                     Latest work completed at your workshop
@@ -255,52 +309,109 @@ function App() {
                   View all
                   <ChevronRight size={16} />
                 </button>
+
               </div>
 
-              <div className="divide-y divide-slate-100">
-                {recentServices.map((service) => (
-                  <div
-                    key={service.vehicle}
-                    className="flex flex-col gap-4 px-5 py-5 transition hover:bg-slate-50 sm:flex-row sm:items-center sm:justify-between sm:px-6"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-orange-50 text-orange-500">
-                        <Bike size={22} />
-                      </div>
+              {/* Loading */}
+              {loadingRecentServices && (
+                <div className="px-5 py-8 text-center text-sm text-slate-500">
+                  Loading recent services...
+                </div>
+              )}
 
-                      <div>
-                        <p className="font-semibold">
-                          {service.vehicle}
-                        </p>
+              {/* Error */}
+              {!loadingRecentServices && recentServicesError && (
+                <div className="px-5 py-8 text-center">
 
-                        <p className="mt-0.5 text-sm text-slate-500">
-                          {service.bike} • {service.customer}
-                        </p>
+                  <p className="text-sm font-medium text-red-500">
+                    Unable to load recent services
+                  </p>
 
-                        <p className="mt-1 text-xs text-slate-400">
-                          {service.service} • {service.date}
-                        </p>
-                      </div>
-                    </div>
+                  <p className="mt-1 text-xs text-slate-500">
+                    {recentServicesError}
+                  </p>
 
-                    <div className="flex items-center justify-between sm:block sm:text-right">
-                      <p className="font-bold">{service.amount}</p>
+                </div>
+              )}
 
-                      <span className="mt-1 inline-flex rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-600">
-                        Completed
-                      </span>
-                    </div>
+              {/* Empty */}
+              {!loadingRecentServices &&
+                !recentServicesError &&
+                recentServices.length === 0 && (
+                  <div className="px-5 py-8 text-center text-sm text-slate-500">
+                    No recent services found.
                   </div>
-                ))}
-              </div>
+                )}
+
+              {/* Real API data */}
+              {!loadingRecentServices &&
+                !recentServicesError &&
+                recentServices.length > 0 && (
+                  <div className="divide-y divide-slate-100">
+
+                    {recentServices.map((service) => (
+                      <div
+                        key={service.id}
+                        className="flex flex-col gap-4 px-5 py-5 transition hover:bg-slate-50 sm:flex-row sm:items-center sm:justify-between sm:px-6"
+                      >
+
+                        <div className="flex items-center gap-4">
+
+                          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-orange-50 text-orange-500">
+                            <Bike size={22} />
+                          </div>
+
+                          <div>
+
+                            <p className="font-semibold">
+                              {service.vehicle_number}
+                            </p>
+
+                            <p className="mt-0.5 text-sm text-slate-500">
+                              {service.bike_model || "-"} •{" "}
+                              {service.customer_name}
+                            </p>
+
+                            <p className="mt-1 text-xs text-slate-400">
+                              Service • {service.service_date}
+                            </p>
+
+                          </div>
+
+                        </div>
+
+                        <div className="flex items-center justify-between sm:block sm:text-right">
+
+                          <p className="font-bold">
+                            ₹
+                            {Number(service.total_amount || 0).toFixed(2)}
+                          </p>
+
+                          <span className="mt-1 inline-flex rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-600">
+                            Completed
+                          </span>
+
+                        </div>
+
+                      </div>
+                    ))}
+
+                  </div>
+                )}
+
             </section>
 
-            {/* Upcoming services */}
+            {/* ================= UPCOMING SERVICES ================= */}
             <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+
               <div className="border-b border-slate-100 px-5 py-5">
+
                 <div className="flex items-center justify-between">
+
                   <div>
-                    <h3 className="font-bold">Upcoming Services</h3>
+                    <h3 className="font-bold">
+                      Upcoming Services
+                    </h3>
 
                     <p className="mt-1 text-xs text-slate-500">
                       Customers to follow up
@@ -310,7 +421,9 @@ function App() {
                   <div className="rounded-xl bg-orange-50 p-2 text-orange-500">
                     <CalendarClock size={19} />
                   </div>
+
                 </div>
+
               </div>
 
               {/* Loading */}
@@ -323,6 +436,7 @@ function App() {
               {/* Error */}
               {!loadingDueServices && dueServicesError && (
                 <div className="px-5 py-8 text-center">
+
                   <p className="text-sm font-medium text-red-500">
                     Unable to load services
                   </p>
@@ -330,6 +444,7 @@ function App() {
                   <p className="mt-1 text-xs text-slate-500">
                     {dueServicesError}
                   </p>
+
                 </div>
               )}
 
@@ -347,7 +462,9 @@ function App() {
                 !dueServicesError &&
                 upcomingServices.length > 0 && (
                   <div className="divide-y divide-slate-100">
+
                     {upcomingServices.map((service) => {
+
                       const isOverdue =
                         service.status?.toUpperCase() === "OVERDUE";
 
@@ -356,7 +473,9 @@ function App() {
                           key={service.id}
                           className="px-5 py-4"
                         >
+
                           <div className="flex items-start gap-3">
+
                             {/* Status dot */}
                             <div
                               className={`mt-1 h-2.5 w-2.5 shrink-0 rounded-full ${
@@ -367,6 +486,7 @@ function App() {
                             />
 
                             <div className="min-w-0 flex-1">
+
                               {/* Vehicle */}
                               <p className="font-semibold">
                                 {service.vehicle_number}
@@ -374,7 +494,8 @@ function App() {
 
                               {/* Bike + customer */}
                               <p className="mt-0.5 truncate text-sm text-slate-500">
-                                {service.bike_model || "Bike model not available"}{" "}
+                                {service.bike_model ||
+                                  "Bike model not available"}{" "}
                                 • {service.customer_name}
                               </p>
 
@@ -390,6 +511,7 @@ function App() {
                                   ? `Overdue • ${service.next_service_date}`
                                   : `Next service • ${service.next_service_date}`}
                               </p>
+
                             </div>
 
                             {/* Status */}
@@ -402,27 +524,38 @@ function App() {
                             >
                               {service.status}
                             </span>
+
                           </div>
+
                         </div>
                       );
                     })}
+
                   </div>
                 )}
 
               <div className="border-t border-slate-100 p-4">
+
                 <button className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-100 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-200">
                   <ClipboardList size={17} />
                   Manage Due Services
                 </button>
+
               </div>
+
             </section>
+
           </div>
 
           {/* Quick actions */}
           <section className="mt-6">
-            <h3 className="mb-4 font-bold">Quick Actions</h3>
+
+            <h3 className="mb-4 font-bold">
+              Quick Actions
+            </h3>
 
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+
               <QuickAction
                 icon={Plus}
                 title="New Service"
@@ -447,8 +580,11 @@ function App() {
                 title="View Reports"
                 description="Workshop performance"
               />
+
             </div>
+
           </section>
+
         </div>
       </main>
     </div>
@@ -473,7 +609,9 @@ function NavItem({ icon: Icon, label, active }) {
 function StatCard({ title, value, change, icon: Icon }) {
   return (
     <div className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+
       <div className="flex items-start justify-between">
+
         <div>
           <p className="text-sm font-medium text-slate-500">
             {title}
@@ -487,11 +625,13 @@ function StatCard({ title, value, change, icon: Icon }) {
         <div className="rounded-xl bg-orange-50 p-3 text-orange-500 transition group-hover:bg-orange-500 group-hover:text-white">
           <Icon size={21} />
         </div>
+
       </div>
 
       <p className="mt-4 text-xs font-medium text-emerald-600">
         {change}
       </p>
+
     </div>
   );
 }
@@ -507,21 +647,26 @@ function QuickAction({
       onClick={onClick}
       className="group flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-orange-200 hover:shadow-md"
     >
+
       <div className="rounded-xl bg-slate-100 p-3 text-slate-600 transition group-hover:bg-orange-500 group-hover:text-white">
         <Icon size={20} />
       </div>
 
       <div>
-        <p className="font-semibold">{title}</p>
+        <p className="font-semibold">
+          {title}
+        </p>
 
         <p className="mt-0.5 text-xs text-slate-500">
           {description}
         </p>
       </div>
+
     </button>
   );
 }
 
 export default App;
+
 
 
