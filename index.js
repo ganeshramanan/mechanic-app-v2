@@ -685,6 +685,43 @@ app.get("/customer/:id", async (req, res) => {
 });
 
 
+/* ---------------- VEHICLES ---------------- */
+
+app.get("/vehicles", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT
+        v.id,
+        v.vehicle_number,
+        v.bike_model,
+        c.name AS customer_name,
+        c.phone AS phone_number,
+        MAX(s.service_date) AS last_service_date,
+        MAX(s.next_service_date) AS next_service_date
+      FROM vehicles v
+      LEFT JOIN customers c
+        ON c.id = v.customer_id
+      LEFT JOIN services s
+        ON s.vehicle_id = v.id
+      GROUP BY
+        v.id,
+        v.vehicle_number,
+        v.bike_model,
+        c.name,
+        c.phone
+      ORDER BY v.id DESC
+    `);
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Vehicles error:", err);
+
+    res.status(500).json({
+      error: err.message,
+    });
+  }
+});
+
 
 
 
