@@ -47,12 +47,11 @@ const stats = [
   },
 ];
 
-const [recentServices, setRecentServices] = useState([]);
 
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState("dashboard");
-
+  const [recentServices, setRecentServices] = useState([]);
   const [upcomingServices, setUpcomingServices] = useState([]);
   const [loadingDueServices, setLoadingDueServices] = useState(true);
   const [dueServicesError, setDueServicesError] = useState("");
