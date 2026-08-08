@@ -72,6 +72,30 @@ export async function getVehicleHistory(vehicleNumber) {
   return response.json();
 }
 
+/* --- Customer data --- */
+export async function getCustomers() {
+  const response = await fetch(`${API_BASE_URL}/customers`);
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || "Failed to load customers");
+  }
+
+  return response.json();
+}
+
+export async function getCustomer(id) {
+  const response = await fetch(`${API_BASE_URL}/customer/${id}`);
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || "Failed to load customer");
+  }
+
+  return response.json();
+}
+
+
 
 /* ---------------- DUE SERVICES ---------------- */
 
