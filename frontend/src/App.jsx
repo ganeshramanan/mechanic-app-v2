@@ -16,8 +16,9 @@ import {
   Wrench,
   X,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import NewService from "./pages/NewService";
+import { API_BASE_URL } from "./api";
 
 const stats = [
   {
