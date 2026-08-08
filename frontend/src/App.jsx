@@ -760,17 +760,7 @@ if (currentPage === "services") {
                 onClick={() => setCurrentPage("vehicle-history")}
               />
 
-              <QuickAction
-                icon={MessageCircle}
-                title="WhatsApp Reminders"
-                description="Contact due customers"
-              />
-
-              <QuickAction
-                icon={Gauge}
-                title="View Reports"
-                description="Workshop performance"
-              />
+             
 
             </div>
 
