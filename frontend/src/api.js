@@ -121,6 +121,18 @@ export async function getServices() {
 }
 
 
+/* ---------------- Whatsapp reminder ---------------- */
+
+export async function getWhatsAppReminders() {
+  const response = await fetch(`${API_BASE_URL}/whatsapp-reminders`);
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || "Failed to load WhatsApp reminders");
+  }
+
+  return response.json();
+}
 
 
 /* ---------------- DUE SERVICES ---------------- */
